@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>晟自然輔助系統　靜電實驗室</title>
+    
+    <style>
+        /* --- 1. 系統變數 --- */
+        :root {
+            --primary-dark: #0b1016;
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --energy-gradient: linear-gradient(90deg, #005bea 0%, #00c6fb 50%, #ffffff 100%);
+            --header-h: 60px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+        body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            font-family: 'Segoe UI', 'Microsoft JhengHei', sans-serif;
+            background-color: var(--primary-dark);
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            overflow: hidden;
+            user-select: none;
+            display: flex;
+            flex-direction: column;
+            color: #fff;
+            cursor: crosshair; 
+            touch-action: none; 
+        }
+
+        /* --- 2. 背景特效層 --- */
+        #storm-bg {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(10,15,30,0.85), rgba(0,0,0,0.95));
+            z-index: 1;
+            transform: translateZ(0);
+        }
+        
+        #bg-lightning-canvas {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 2; 
+            pointer-events: none;
+            opacity: 0.9;
+            mix-blend-mode: screen; 
+        }
+
+        #lightning-flash {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle at 50% 30%, rgba(200, 220, 255, 0.5), transparent 80%);
+            opacity: 0; 
+            z-index: 3;
+            pointer-events: none;
+            mix-blend-mode: overlay;
+            transition: opacity 0.05s ease-out; 
+            will-change: opacity; 
+        }
+
+        /* --- 3. 標題列 --- */
+        header {
+            position: absolute; top: 0; left: 0; width: 100%;
+            height: var(--header-h);
+            display: flex; align-items: center;
+            padding: 0 20px;
+            z-index: 10;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+            pointer-events: none;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+        }
+
+        .logo-img { height: 32px; margin-right: 15px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,243,255,0.3); }
+        .title-text { font-size: 1.2rem; letter-spacing: 2px; font-weight: 600; color: #e0faff; }
+
+        /* --- 4. 前景互動畫布 --- */
+        #canvas-layer {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 25; 
+            pointer-events: none; 
+        }
+
+        /* --- 5. UI 容器 --- */
+        #ui-container {
+            position: relative;
+            z-index: 20;
+            width: 100%; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 35px;
+            padding-top: 40px;
+            transform: translateZ(0); 
+        }
+
+        .hint-text {
+            color: rgba(100, 200, 255, 0.8);
+            font-size: 1rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-align: center;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
+            animation: textBreath 2s infinite ease-in-out;
+        }
+
+        @keyframes textBreath {
+            0%, 100% { opacity: 0.6; transform: scale(0.98); }
+            50% { opacity: 1; transform: scale(1.02); }
+        }
+
+        /* --- 6. 萊頓瓶裝置按鈕 --- */
+        .capacitor-btn {
+            position: relative;
+            width: 340px;
+            height: 110px;
+            background: rgba(10, 15, 20, 0.7); 
+            border: 2px solid #4a5568;
+            border-radius: 6px; 
+            overflow: hidden;
+            cursor: grab;
+            transition: transform 0.05s linear; 
+            display: flex;
+            align-items: center;
+            justify-content: flex-start; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6), inset 0 0 30px rgba(0,0,0,0.8);
+            backdrop-filter: blur(8px);
+            will-change: transform; 
+        }
+
+        .capacitor-btn::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .plasma-fill {
+            position: absolute;
+            top: 0; left: 0;       
+            width: 0%;             
+            height: 100%;          
+            background: var(--energy-gradient);
+            box-shadow: 0 0 20px var(--neon-blue); 
+            z-index: 1;
+            transition: width 0.05s linear; 
+            filter: brightness(1.1);
+            border-right: 3px solid #fff;
+            will-change: width;
+        }
+        
+        .capacitor-btn.overload .plasma-fill {
+            background: #fff;
+            filter: brightness(2); 
+            width: 100% !important;
+        }
+
+        .btn-content {
+            position: relative; z-index: 5;
+            display: flex; flex-direction: column; align-items: flex-start;
+            width: 100%; padding: 0 30px;
+            pointer-events: none;
+            text-shadow: 0 2px 5px rgba(0,0,0,0.9);
+        }
+
+        .btn-title { font-size: 1.4rem; font-weight: 800; color: #fff; letter-spacing: 1px; }
+        .btn-desc { font-size: 0.85rem; color: #a0aec0; margin-top: 5px; font-family: monospace; }
+        
+        .voltage-readout {
+            position: absolute; top: 12px; right: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: var(--neon-blue);
+            z-index: 15;
+            text-shadow: 0 0 5px var(--neon-blue);
+        }
+
+        /* --- 7. 全白閃光層 --- */
+        #flash-layer {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: white; z-index: 999; opacity: 0; pointer-events: none;
+            transition: opacity 0.5s ease-out; 
+            will-change: opacity;
+        }
+
+        @media (max-width: 600px) {
+            .capacitor-btn { width: 90%; height: 95px; }
+            .btn-title { font-size: 1.2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <img src="logo.jpg" class="logo-img" alt="Logo">
+        <span class="title-text">晟自然輔助系統　靜電實驗室</span>
+    </header>
+
+    <div id="storm-bg"></div>
+    <canvas id="bg-lightning-canvas"></canvas>
+    <div id="lightning-flash"></div>
+    <canvas id="canvas-layer"></canvas>
+
+    <div id="ui-container">
+        <div class="hint-text">WARNING: ENERGY LOW<br>請快速摩擦電容槽充能</div>
+
+        <div class="capacitor-btn" id="btn-A" data-target="專案A - 靜電感應.html">
+            <div class="plasma-fill"></div>
+            <div class="voltage-readout">00%</div>
+            <div class="btn-content">
+                <span class="btn-title">PROJECT A</span>
+                <span class="btn-desc">靜電感應現象模擬</span>
+            </div>
+        </div>
+
+        <div class="capacitor-btn" id="btn-B" data-target="專案B - 感應起電.html">
+            <div class="plasma-fill"></div>
+            <div class="voltage-readout">00%</div>
+            <div class="btn-content">
+                <span class="btn-title">PROJECT B</span>
+                <span class="btn-desc">感應起電操作程序</span>
+            </div>
+        </div>
+
+        <div class="capacitor-btn" id="btn-C" data-target="專案C - 接觸起電.html">
+            <div class="plasma-fill"></div>
+            <div class="voltage-readout">00%</div>
+            <div class="btn-content">
+                <span class="btn-title">PROJECT C</span>
+                <span class="btn-desc">接觸起電與電荷分配</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="flash-layer"></div>
+
+    <script>
+        // =========================================================
+        // 晟自然 - 雷電實驗室 V10 (The Root Cure - Secure Navigation)
+        // =========================================================
+
+        const CONFIG = {
+            frictionGain: 0.18,      
+            baseDecay: 0.08,         
+            maxDecay: 0.4,           
+            arcThreshold: 3,         
+            maxCharge: 100
+        };
+        
+        const IS_MOBILE = window.innerWidth < 768;
+
+        const buttons = [
+            { 
+                id: 'btn-A', charge: 0, 
+                el: document.getElementById('btn-A'), 
+                fillEl: document.getElementById('btn-A').querySelector('.plasma-fill'),
+                textEl: document.getElementById('btn-A').querySelector('.voltage-readout'),
+                shake: 0,
+                rect: { left:0, right:0, top:0, bottom:0 } 
+            },
+            { 
+                id: 'btn-B', charge: 0, 
+                el: document.getElementById('btn-B'), 
+                fillEl: document.getElementById('btn-B').querySelector('.plasma-fill'),
+                textEl: document.getElementById('btn-B').querySelector('.voltage-readout'),
+                shake: 0,
+                rect: { left:0, right:0, top:0, bottom:0 }
+            },
+            { 
+                id: 'btn-C', charge: 0, 
+                el: document.getElementById('btn-C'), 
+                fillEl: document.getElementById('btn-C').querySelector('.plasma-fill'),
+                textEl: document.getElementById('btn-C').querySelector('.voltage-readout'),
+                shake: 0,
+                rect: { left:0, right:0, top:0, bottom:0 }
+            }
+        ];
+
+        let state = {
+            lastX: 0, lastY: 0,
+            isRedirecting: false,
+            frame: 0
+        };
+
+        const canvas = document.getElementById('canvas-layer');
+        const ctx = canvas.getContext('2d', { alpha: true }); 
+        const bgCanvas = document.getElementById('bg-lightning-canvas');
+        const bgCtx = bgCanvas.getContext('2d', { alpha: true });
+        const bgFlash = document.getElementById('lightning-flash');
+        
+        let arcs = [];
+        let bgBolts = [];
+
+        function updateButtonBounds() {
+            buttons.forEach(btn => {
+                const rect = btn.el.getBoundingClientRect();
+                btn.rect = {
+                    left: rect.left, right: rect.right,
+                    top: rect.top, bottom: rect.bottom,
+                    width: rect.width, height: rect.height
+                };
+            });
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            updateButtonBounds(); 
+        }
+        window.addEventListener('resize', resize);
+        setTimeout(resize, 100); 
+
+        // --- 1. 閃電算法 ---
+        function drawLightningBranch(ctx, x1, y1, x2, y2, displace, width, color) {
+            if (displace < (IS_MOBILE ? 4 : 2)) { 
+                ctx.lineWidth = width;
+                ctx.strokeStyle = color;
+                ctx.beginPath();
+                ctx.moveTo(x1, y1);
+                ctx.lineTo(x2, y2);
+                ctx.stroke();
+                return;
+            }
+            let midX = (x1 + x2) / 2;
+            let midY = (y1 + y2) / 2;
+            midX += (Math.random() - 0.5) * displace;
+            midY += (Math.random() - 0.5) * displace;
+            
+            drawLightningBranch(ctx, x1, y1, midX, midY, displace / 2, width, color);
+            drawLightningBranch(ctx, midX, midY, x2, y2, displace / 2, width, color);
+            
+            if (Math.random() < (IS_MOBILE ? 0.15 : 0.3) && width > 0.5) {
+                let branchX = midX + (Math.random() - 0.5) * displace * 2;
+                let branchY = midY + (Math.random() * displace);
+                drawLightningBranch(ctx, midX, midY, branchX, branchY, displace / 1.5, width * 0.6, color);
+            }
+        }
+
+        // --- 2. 背景雷擊 ---
+        class SkyBolt {
+            constructor() {
+                this.x = Math.random() * window.innerWidth;
+                this.y = -50; 
+                this.tx = this.x + (Math.random() - 0.5) * 400;
+                this.ty = window.innerHeight * (0.6 + Math.random() * 0.4); 
+                this.life = 8; 
+                this.opacity = 1;
+            }
+            draw() {
+                if (this.life > 0) {
+                    if (!IS_MOBILE) {
+                        bgCtx.shadowBlur = 30;
+                        bgCtx.shadowColor = "#fff";
+                    }
+                    bgCtx.globalAlpha = this.opacity;
+                    drawLightningBranch(bgCtx, this.x, this.y, this.tx, this.ty, 120, 2.5, "#ffffff");
+                    bgCtx.globalAlpha = 1;
+                    bgCtx.shadowBlur = 0; 
+                    this.life--;
+                    this.opacity -= 0.15;
+                }
+            }
+        }
+
+        class Arc {
+            constructor(sx, sy, tx, ty, power) {
+                this.sx = sx; this.sy = sy; 
+                this.tx = tx; this.ty = ty; 
+                this.life = 2 + Math.random() * 3; 
+                this.color = Math.random() > 0.3 ? '#00f3ff' : '#ffffff';
+                this.width = Math.min(3, power / 8);
+            }
+            draw(ctx) {
+                if (!IS_MOBILE) {
+                    ctx.shadowBlur = 15;
+                    ctx.shadowColor = this.color;
+                } else {
+                    ctx.lineWidth = this.width * 1.5; 
+                }
+                drawLightningBranch(ctx, this.sx, this.sy, this.tx, this.ty, 40, this.width, this.color);
+                ctx.shadowBlur = 0; 
+                this.life--;
+            }
+        }
+
+        // --- 3. 互動核心 ---
+        function handleInput(x, y) {
+            if (state.isRedirecting) return;
+            
+            const dx = x - state.lastX;
+            const dy = y - state.lastY;
+            const dist = Math.sqrt(dx*dx + dy*dy);
+
+            let hitBtn = null;
+            for (let btn of buttons) {
+                if (x >= btn.rect.left && x <= btn.rect.right &&
+                    y >= btn.rect.top && y <= btn.rect.bottom) {
+                    hitBtn = btn;
+                    break;
+                }
+            }
+
+            if (hitBtn && dist > CONFIG.arcThreshold) {
+                let gain = dist * CONFIG.frictionGain;
+                hitBtn.charge += gain;
+                
+                if (hitBtn.charge >= CONFIG.maxCharge) {
+                    hitBtn.charge = CONFIG.maxCharge;
+                    triggerOverload(hitBtn); 
+                    return; 
+                }
+
+                const tx = hitBtn.rect.left + Math.random() * hitBtn.rect.width;
+                const ty = hitBtn.rect.top + Math.random() * hitBtn.rect.height;
+                arcs.push(new Arc(x, y, tx, ty, dist));
+                
+                hitBtn.shake = Math.min(8, dist / 3);
+            }
+            
+            state.lastX = x; state.lastY = y;
+        }
+
+        window.addEventListener('mousemove', e => handleInput(e.clientX, e.clientY));
+        window.addEventListener('touchmove', e => {
+            e.preventDefault();
+            handleInput(e.touches[0].clientX, e.touches[0].clientY);
+        }, { passive: false });
+        
+        window.addEventListener('mousedown', e => { state.lastX = e.clientX; state.lastY = e.clientY; });
+        window.addEventListener('touchstart', e => { state.lastX = e.touches[0].clientX; state.lastY = e.touches[0].clientY; });
+
+        function updateBackgroundStorm() {
+            if (Math.random() < 0.03) { 
+                bgBolts.push(new SkyBolt());
+                bgFlash.style.opacity = 0.6;
+                setTimeout(() => { bgFlash.style.opacity = 0; }, 100);
+            } 
+        }
+
+        // --- 4. 主迴圈 ---
+        function loop() {
+            state.frame++;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            
+            updateBackgroundStorm();
+
+            for (let i = bgBolts.length - 1; i >= 0; i--) {
+                bgBolts[i].draw();
+                if (bgBolts[i].life <= 0) bgBolts.splice(i, 1);
+            }
+
+            buttons.forEach(btn => {
+                if (state.isRedirecting) {
+                    if (btn.charge >= 100) {
+                         btn.fillEl.style.width = '100%';
+                         btn.el.style.transform = `scale(1.05)`;
+                    }
+                    return; 
+                }
+
+                if (btn.charge > 0) {
+                    let decay = CONFIG.baseDecay + (btn.charge * 0.005); 
+                    if (decay > CONFIG.maxDecay) decay = CONFIG.maxDecay;
+                    btn.charge -= decay;
+                    if (btn.charge < 0) btn.charge = 0;
+                }
+
+                btn.fillEl.style.width = `${btn.charge}%`;
+                btn.textEl.innerText = `${Math.floor(btn.charge)}%`;
+                
+                const isHighCharge = btn.charge > 80;
+                if (isHighCharge && !btn.el.classList.contains('high-charge')) {
+                    btn.el.classList.add('high-charge');
+                    btn.el.style.borderColor = "#fff";
+                    if (!IS_MOBILE) btn.el.style.boxShadow = `0 0 ${btn.charge}px rgba(255,255,255,0.4)`;
+                } else if (!isHighCharge && btn.el.classList.contains('high-charge')) {
+                    btn.el.classList.remove('high-charge');
+                    btn.el.style.borderColor = "#4a5568";
+                    btn.el.style.boxShadow = "none";
+                }
+
+                if (btn.shake > 0) {
+                    const dx = (Math.random() - 0.5) * btn.shake;
+                    const dy = (Math.random() - 0.5) * btn.shake;
+                    btn.el.style.transform = `translate(${dx}px, ${dy}px)`;
+                    btn.shake *= 0.85; 
+                    if (btn.shake < 0.5) btn.shake = 0; 
+                } else {
+                    if (btn.el.style.transform !== 'translate(0px, 0px)') 
+                        btn.el.style.transform = `translate(0, 0)`;
+                }
+            });
+
+            for (let i = arcs.length - 1; i >= 0; i--) {
+                const arc = arcs[i];
+                arc.draw(ctx);
+                if (arc.life <= 0) arcs.splice(i, 1);
+            }
+
+            requestAnimationFrame(loop);
+        }
+
+        // --- 5. 觸發與重置邏輯 (The Fix) ---
+        function triggerOverload(btnData) {
+            if (state.isRedirecting) return;
+            state.isRedirecting = true; 
+            
+            btnData.charge = 100;
+            btnData.el.classList.add('overload');
+            btnData.fillEl.style.width = '100%'; 
+            btnData.textEl.innerText = "LAUNCH";
+            
+            const flash = document.getElementById('flash-layer');
+            flash.style.opacity = 1;
+            
+            // ★ 根治方案：改用 location.href (原頁面跳轉)
+            // 這能繞過所有瀏覽器的彈窗攔截，手機端體驗最穩定
+            setTimeout(() => {
+                const targetUrl = btnData.el.getAttribute('data-target');
+                window.location.href = targetUrl;
+            }, 100); 
+        }
+
+        // ★ 新增：當使用者按「上一頁」回來時，自動重置系統
+        // 這是配合 location.href 的關鍵配套，讓使用者可以重新充電
+        window.addEventListener('pageshow', function(event) {
+            // 如果頁面是從快取中恢復 (bfcache)，或者單純重新顯示
+            if (state.isRedirecting) {
+                // 強制重置所有按鈕
+                buttons.forEach(btn => resetSystem(btn));
+                
+                // 確保白光消失
+                const flash = document.getElementById('flash-layer');
+                flash.style.opacity = 0;
+                
+                state.isRedirecting = false;
+            }
+        });
+
+        function resetSystem(btnData) {
+            btnData.charge = 0;
+            btnData.shake = 0;
+            btnData.el.classList.remove('overload');
+            btnData.el.classList.remove('high-charge');
+            btnData.el.style.transform = `scale(1.0)`;
+            btnData.fillEl.style.width = '0%';
+            btnData.textEl.innerText = "0%";
+            btnData.el.style.borderColor = "#4a5568";
+            btnData.el.style.boxShadow = "none";
+        }
+
+        loop();
+
+    </script>
+</body>
+</html>

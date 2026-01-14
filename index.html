@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <title>晟自然輔助系統 實驗室大廳</title>
+    
+    <style>
+        /* =========================================
+           【系統參數設置區】
+           ========================================= */
+        :root {
+            --bg-main: #1a1a2e;
+            --primary-neon: #00d2ff;
+            --accent-neon: #f093fb;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --bg-overlay: rgba(26, 26, 46, 0.85);
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+            --card-hover-bg: rgba(0, 210, 255, 0.1);
+            --glass-blur: blur(12px);
+            --font-stack: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            
+            /* 安全區域變數 (適配 iPhone 瀏海與底部橫條) */
+            --safe-top: env(safe-area-inset-top);
+            --safe-bottom: env(safe-area-inset-bottom);
+        }
+
+        /* =========================================
+           【核心佈局區 - App Shell 架構】
+           ========================================= */
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            /* 隱藏預設捲動軸，視覺更潔淨 */
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        *::-webkit-scrollbar { display: none; }
+
+        body {
+            margin: 0; padding: 0;
+            font-family: var(--font-stack);
+            background-color: var(--bg-main);
+            background-image: url('page.jpg'); /* 底圖 */
+            background-size: cover;
+            background-position: center;
+            /* 移除 fixed attachment，改用 div 容器控制，避免移動端渲染抖動 */
+            background-repeat: no-repeat;
+            color: var(--text-main);
+            
+            /* [關鍵修改] 鎖定視窗高度，避免 iOS 網址列跳動 */
+            width: 100%;
+            height: 100dvh; /* dynamic viewport height */
+            overflow: hidden; /* 禁止 body 捲動 */
+            
+            display: flex; 
+            flex-direction: column; /* 垂直排列：頭 - 身 - 尾 */
+        }
+
+        /* 背景遮罩層 */
+        body::before { 
+            content: ""; position: absolute; top: 0; left: 0; right: 0; bottom: 0; 
+            background: var(--bg-overlay); z-index: -1; pointer-events: none;
+        }
+        
+        /* Header: 固定在頂部，不壓縮 */
+        header {
+            flex-shrink: 0; 
+            display: flex; align-items: center; justify-content: center;
+            padding: 15px 20px; 
+            /* 增加頂部安全距離 */
+            padding-top: calc(15px + var(--safe-top));
+            
+            border-bottom: 1px solid var(--card-border);
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur);
+            z-index: 1000;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Main: 佔據剩餘空間，內部捲動 */
+        main { 
+            flex: 1; /* 自動填滿中間區域 */
+            overflow-y: auto; /* 只有這裡可以捲動 */
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch; /* iOS 滑動慣性 */
+            
+            padding: 30px 20px; 
+            width: 100%; 
+            max-width: 1200px; 
+            margin: 0 auto;
+        }
+
+        /* Footer: 固定在底部，不壓縮 */
+        footer { 
+            flex-shrink: 0;
+            text-align: center; 
+            padding: 15px 20px; 
+            /* 增加底部安全距離 */
+            padding-bottom: calc(15px + var(--safe-bottom));
+            
+            font-size: 0.8rem; 
+            color: rgba(255, 255, 255, 0.3); 
+            border-top: 1px solid rgba(255, 255, 255, 0.05); 
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(5px);
+        }
+
+        /* =========================================
+           【元件樣式區】
+           ========================================= */
+        .brand-container { display: flex; align-items: center; gap: 15px; }
+        .logo-img {
+            width: 45px; height: 45px; border-radius: 50%;
+            border: 2px solid var(--primary-neon);
+            box-shadow: 0 0 10px var(--primary-neon);
+            object-fit: cover;
+        }
+        .system-title { font-size: 1.4rem; font-weight: 700; letter-spacing: 1px; text-shadow: 0 0 10px rgba(0, 210, 255, 0.5); }
+        .system-subtitle { font-size: 0.9rem; color: var(--primary-neon); margin-left: 10px; opacity: 0.8; border-left: 2px solid var(--accent-neon); padding-left: 10px; }
+
+        .intro-text { text-align: center; margin-bottom: 20px; color: var(--text-muted); font-size: 0.95rem; max-width: 600px; margin-left: auto; margin-right: auto; }
+
+        /* --- 分類過濾按鈕 --- */
+        .filter-container {
+            display: flex; justify-content: center; gap: 10px; margin-bottom: 30px; flex-wrap: wrap;
+            /* 讓過濾器在捲動時有一點黏性 (Optional, 視需求可移除) */
+            position: sticky; top: -10px; 
+            z-index: 90; padding: 10px 0;
+            /* 為了避免 sticky 背景穿透，可以加一點背景色或 blur，這裡保持透明 */
+        }
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: var(--text-muted);
+            padding: 8px 16px; border-radius: 20px;
+            cursor: pointer; font-size: 0.9rem; transition: all 0.3s ease;
+        }
+        @media (hover: hover) {
+            .filter-btn:hover { border-color: var(--primary-neon); color: var(--text-main); }
+        }
+        .filter-btn.active {
+            background: rgba(0, 210, 255, 0.2);
+            border-color: var(--primary-neon);
+            color: var(--primary-neon);
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+        }
+
+        .lab-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+            /* 確保底部有足夠空間，不會被 footer 遮擋太緊 */
+            padding-bottom: 20px;
+        }
+
+        /* 卡片本體 */
+        .lab-card {
+            background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px;
+            padding: 25px; display: flex; flex-direction: column;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative; overflow: hidden; backdrop-filter: blur(5px);
+            color: var(--text-main);
+            display: flex;
+        }
+        .lab-card.hidden { display: none; }
+
+        /* 電腦版 Hover 特效 */
+        @media (hover: hover) {
+            .lab-card:hover { 
+                transform: translateY(-5px) scale(1.02); 
+                background: var(--card-hover-bg); 
+                border-color: var(--primary-neon); 
+                box-shadow: 0 10px 25px -5px rgba(0, 210, 255, 0.3); 
+            }
+            .lab-card:hover::before { opacity: 1; box-shadow: 0 0 8px var(--primary-neon); }
+        }
+
+        .lab-card::before { content: ""; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--primary-neon); opacity: 0.5; transition: opacity 0.3s; }
+        
+        .card-icon { 
+            font-size: 2.5rem; margin-bottom: 15px; text-shadow: 0 0 15px rgba(255,255,255,0.3); 
+        }
+
+        .card-title { font-size: 1.3rem; font-weight: 700; margin: 0 0 10px 0; color: var(--primary-neon); }
+        .card-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; flex-grow: 1; }
+        
+        /* 按鈕樣式 */
+        .card-btn {
+            background: linear-gradient(90deg, transparent 0%, rgba(0, 210, 255, 0.1) 100%);
+            border: 1px solid var(--primary-neon); color: var(--primary-neon);
+            padding: 10px 20px; border-radius: 8px; text-align: center;
+            font-weight: 600; letter-spacing: 1px; transition: all 0.2s; 
+            display: inline-block; 
+            text-decoration: none; 
+            cursor: pointer;
+            align-self: flex-start; 
+        }
+
+        @media (hover: hover) {
+            .card-btn:hover { background: var(--primary-neon); color: #000; box-shadow: 0 0 15px var(--primary-neon); }
+            .lab-card:hover .card-btn { background: var(--primary-neon); color: #000; box-shadow: 0 0 15px var(--primary-neon); }
+        }
+        
+        .card-btn:active {
+            transform: scale(0.95);
+            background: var(--primary-neon); color: #000;
+        }
+
+        /* 特殊卡片 Highlight */
+        .lab-card.highlight { border-color: var(--accent-neon); }
+        .lab-card.highlight::before { background: var(--accent-neon); }
+        .lab-card.highlight .card-title { color: var(--accent-neon); }
+        .lab-card.highlight .card-btn { border-color: var(--accent-neon); color: var(--accent-neon); background: linear-gradient(90deg, transparent 0%, rgba(240, 147, 251, 0.1) 100%); }
+        
+        @media (hover: hover) {
+            .lab-card.highlight:hover .card-btn,
+            .lab-card.highlight .card-btn:hover { background: var(--accent-neon); color: #000; box-shadow: 0 0 15px var(--accent-neon); }
+        }
+        
+        .lab-card.highlight .card-btn:active { background: var(--accent-neon); color: #000; transform: scale(0.95); }
+
+
+        /* 手機版適配 */
+        @media (max-width: 600px) {
+            .system-title { font-size: 1.1rem; }
+            .system-subtitle { display: none; }
+            .lab-grid { grid-template-columns: 1fr; }
+            .lab-card { flex-direction: row; align-items: center; padding: 15px; }
+            .lab-card::before { width: 3px; }
+            
+            .card-icon { 
+                font-size: 2rem; margin-bottom: 0; margin-right: 15px;
+                width: 50px; text-align: center; flex-shrink: 0;
+            }
+            
+            .card-content { flex: 1; display: flex; flex-direction: column; justify-content: center; }
+            .card-title { font-size: 1.1rem; margin-bottom: 0; }
+            .card-desc { display: none; }
+            
+            .card-btn { 
+                padding: 8px 15px; font-size: 0.85rem; margin-left: 10px; 
+                white-space: nowrap; align-self: center; 
+            }
+            
+            .filter-container { gap: 8px; }
+            .filter-btn { padding: 6px 12px; font-size: 0.85rem; }
+            
+            /* 手機版 Header 稍微縮小高度以節省空間 */
+            header { padding: 10px 15px; padding-top: calc(10px + var(--safe-top)); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-container">
+            <img src="logo.jpg" alt="晟自然 Logo" class="logo-img">
+            <div>
+                <span class="system-title">晟自然輔助系統</span>
+                <span class="system-subtitle">實驗室大廳</span>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="intro-text">
+            請選擇下列模組　啟動實驗模擬<br>
+        </div>
+
+        <div class="filter-container">
+            <button class="filter-btn active" onclick="filterLabs('all')">all</button>
+            <button class="filter-btn" onclick="filterLabs('game')">遊戲</button>
+            <button class="filter-btn" onclick="filterLabs('phy')">物理</button>
+            <button class="filter-btn" onclick="filterLabs('earth')">地科</button>
+        </div>
+
+        <div class="lab-grid">
+            
+            <div class="lab-card highlight" data-category="game">
+                <div class="card-icon">🎮</div>
+                <div class="card-content">
+                    <h3 class="card-title">手速競技場－通識</h3>
+                    <p class="card-desc">包含錦標賽、生存模式與快速搶答。支援多人生存與積分系統。</p>
+                </div>
+                <a href="game/index.html" class="card-btn" target="_blank">啟動系統</a>
+            </div>
+			
+			<div class="lab-card highlight" data-category="game">
+                <div class="card-icon">🎮</div>
+                <div class="card-content">
+                    <h3 class="card-title">手速競技場－各級單元</h3>
+                    <p class="card-desc">包含生存模式與快速搶答。</p>
+                </div>
+                <a href="play/index.html" class="card-btn" target="_blank">啟動系統</a>
+            </div>
+
+            <div class="lab-card" data-category="earth">
+                <div class="card-icon">🌔</div> 
+                <div class="card-content">
+                    <h3 class="card-title">天　體：月相盈虧</h3> 
+                    <p class="card-desc">模擬月球公轉與光照關係，動態呈現朔望月週期變化。</p> 
+                </div>
+                <a href="月相.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+
+            <div class="lab-card" data-category="earth">
+                <div class="card-icon">🌍</div>
+                <div class="card-content">
+                    <h3 class="card-title">天　體：太陽與四季</h3>
+                    <p class="card-desc">分析太陽直射角度、晝夜長短與季節變化的幾何關係。</p>
+                </div>
+                <a href="四季.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+
+            <div class="lab-card" data-category="phy">
+                <div class="card-icon">⚡</div>
+                <div class="card-content">
+                    <h3 class="card-title">靜電學：實驗模組</h3>
+                    <p class="card-desc">互動式電棒與金屬球，模擬靜電實驗。</p>
+                </div>
+                <a href="se/index.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+			
+			<div class="lab-card" data-category="phy">
+                <div class="card-icon">🔋</div>
+                <div class="card-content">
+                    <h3 class="card-title">電路學：串並聯</h3>
+                    <p class="card-desc">互動式電路板，模擬燈泡亮度、斷路測試與電流路徑分析。</p>
+                </div>
+                <a href="串並聯.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+            
+            <div class="lab-card" data-category="phy">
+                <div class="card-icon">🔋</div>
+                <div class="card-content">
+                    <h3 class="card-title">電路學：燈泡亮暗</h3>
+                    <p class="card-desc">互動式電路板，模擬燈泡亮度、比較差異影響。</p>
+                </div>
+                <a href="燈泡亮暗.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+
+            <div class="lab-card" data-category="phy">
+                <div class="card-icon">🧲</div>
+                <div class="card-content">
+                    <h3 class="card-title">電磁學：安培右手</h3>
+                    <p class="card-desc">安培右手定則模擬，觀察長直導線電流對磁針偏轉的影響。</p>
+                </div>
+                <a href="安培右手.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+			
+			<div class="lab-card" data-category="phy">
+                <div class="card-icon">🧲</div>
+                <div class="card-content">
+                    <h3 class="card-title">磁學：地球磁場</h3>
+                    <p class="card-desc">磁針移動模擬，觀察地球磁場對磁針偏轉的影響。</p>
+                </div>
+                <a href="地球磁場.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+
+            <div class="lab-card" data-category="phy">
+                <div class="card-icon">🔥</div>
+                <div class="card-content">
+                    <h3 class="card-title">熱　學：熱平衡</h3>
+                    <p class="card-desc">模擬冷熱水混合過程，計算熱量轉移與最終平衡溫度。</p>
+                </div>
+                <a href="熱平衡.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+
+        </div>
+    </main>
+
+    <footer>
+        © 2025 晟自然輔助系統 | Designed for Science Education
+    </footer>
+
+    <script>
+        // [系統功能] 卡片入場動畫
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.lab-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        // [功能] 分類篩選邏輯
+        function filterLabs(category) {
+            const buttons = document.querySelectorAll('.filter-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+            
+            // 找出被點擊的按鈕並加上 Active 狀態
+            const clickedBtn = Array.from(buttons).find(b => b.getAttribute('onclick').includes(`'${category}'`));
+            if(clickedBtn) clickedBtn.classList.add('active');
+
+            // 執行篩選
+            const cards = document.querySelectorAll('.lab-card');
+            cards.forEach(card => {
+                const cardCat = card.getAttribute('data-category');
+                
+                if (category === 'all' || cardCat === category) {
+                    card.style.display = 'flex';
+                    // 重新觸發微動畫
+                    card.style.opacity = '0';
+                    card.style.transform = 'translateY(10px)';
+                    setTimeout(() => {
+                        card.style.opacity = '1';
+                        card.style.transform = 'translateY(0)';
+                    }, 50);
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+    </script>
+</body>
+</html>

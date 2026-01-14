@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>晟自然輔助系統　電路實驗室</title>
+    <style>
+        /* --- 核心變數 (保留原電路模擬設定) --- */
+        :root {
+            --wire-color: #333;
+            --bg-color: #f0f4f8; /* 同步 index 背景色調 */
+            --panel-color: #ffffff;
+            --bulb-off: #bdc3c7;
+            --bulb-dim-color: #d35400;   /* 最暗 */
+            --bulb-norm-color: #f1c40f;  /* 普通 */
+            --bulb-bright-color: #fff700;/* 最亮 */
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #f0f2f5;
+            
+            display: flex; flex-direction: column; align-items: center;
+            /* 修改：減少上下邊距，盡量讓內容塞進一頁 */
+            margin: 0; padding: 5px; 
+            height: 100vh;       /* 舊手機相容 */
+            height: 100dvh;      /* 關鍵：扣除工具列後的實際高度 */
+            overflow: hidden;    /* 禁止產生任何捲軸 */
+            touch-action: manipulation;
+        }
+
+        /* --- 標題區 (手機版緊湊化) --- */
+        .header-container {
+            flex-shrink: 0; /* 禁止被壓縮 */
+            width: 97%;     /* 稍微留邊 */
+			box-sizing: border-box; /* 確保 padding 不會讓它變更寬 */
+            max-width: 800px;
+            
+            /* 讓標題在左，按鈕在右 */
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            
+            /* 視覺美化 */
+            padding: 8px 15px;
+            margin-top: 5px;
+			margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.9); /* 90% 不透明度 */
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 立體陰影 */
+            z-index: 1000;
+        }
+		
+        .title-logo {
+            height: 36px; /* 限制高度，避免撐開 */
+            width: auto;
+            border-radius: 4px;
+        }
+        .header-container h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #333;
+            line-height: 1.3;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Logo 與文字間距 */
+        }
+		
+		/* =========================================
+           3. 右上角按鈕群 (新功能)
+           ========================================= */
+        .nav-buttons {
+            display: flex;
+            gap: 8px; /* 按鈕之間的間距 */
+        }
+		
+		/* 精緻化的 LINE 按鈕 (膠囊狀) */
+        .header-btn {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            background: #06c755; /* LINE 的官方綠色 */
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 20px; /* 圓角膠囊 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+            white-space: nowrap; /* 禁止文字換行 */
+        }
+		
+		.header-btn:active {
+            transform: scale(0.95);
+        }
+
+        .header-btn span {
+            margin-right: 4px; /* 圖示與文字距離 */
+        }
+
+        /* --- 新增：外部連結按鈕 (移植自 index.html) --- */
+        .external-link-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px; 
+            text-decoration: none;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            
+            /* 樣式保持一致 */
+            padding: 6px 18px; 
+            font-size: 0.9rem; 
+            
+            border-radius: 50px;
+            font-weight: bold;
+            /* 微調：針對此檔案較緊湊的佈局，將原 margin-bottom: 20px 微調為 10px */
+            margin-bottom: 10px;
+            box-shadow: 0 3px 8px rgba(52, 152, 219, 0.4);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .external-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(52, 152, 219, 0.6);
+            background: linear-gradient(135deg, #2980b9 0%, #2c3e50 100%);
+        }
+        .external-link-btn:active {
+            transform: scale(0.98);
+        }
+		
+		/* --- 教學引導任務條樣式 --- */
+		.instruction-bar {
+		    /* 定位與佈局 */
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 8px; /* 圖示與文字間距 */
+			
+			/* 尺寸限制，與標題區保持視覺協調 */
+			max-width: 90%;
+			width: fit-content; /* 內容多寬就多寬，不要自動撐滿整行 */
+			margin: -5px auto 15px auto; /* 負邊距將其向上拉近標題，下方留出呼吸空間 */
+			
+			/* 外觀設計 - 輕量化 */
+			padding: 6px 20px;
+			background-color: rgba(255, 255, 255, 0.85); /* 比標題區更通透 */
+			border-radius: 20px; /* 圓潤的膠囊狀 */
+			box-shadow: 0 2px 8px rgba(0,0,0,0.05); /* 極輕微的陰影 */
+			backdrop-filter: blur(4px); /* 毛玻璃效果，增加質感 */
+			
+			/* 文字設定 */
+			color: #555; /* 深灰色，不搶黑色標題的戲 */
+			font-size: 0.9rem;
+			font-weight: 500;
+			line-height: 1.4;
+			text-align: center;
+			pointer-events: none; /* 讓滑鼠可以直接穿透，不會阻擋操作 */
+		}
+		
+		.instruction-bar .icon {
+    		font-size: 1rem; /* 圖示稍微大一點 */
+		}
+
+        /* --- 主容器 (保持原樣，微調 Margin) --- */
+        .simulation-container {
+            position: relative;
+            width: 500px; height: 450px;
+            background: var(--panel-color); border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: flex-start;
+            padding-top: 30px; 
+            overflow: hidden; 
+            transition: all 0.3s ease;
+            z-index: 1;
+            /* margin-bottom 由外部控制，不強制 */
+        }
+
+        /* --- 以下為原電路模擬樣式，未做邏輯更動 --- */
+        .circuit-scene {
+            position: relative; width: 100%; height: 100%; display: none;
+        }
+        .circuit-scene.active { display: block; }
+
+        .info-panel {
+            position: absolute;  
+            bottom: 10px;        
+            left: 50%;           
+            transform: translateX(-50%); 
+            background: #ecf0f1;
+            width: 90%;
+            padding: 8px 10px;
+            border-radius: 10px;
+            text-align: center;
+            border-left: 5px solid #3498db;
+            max-height: 95px;
+            overflow-y: auto;
+            min-height: 70px;
+            display: flex; flex-direction: column; justify-content: center;
+            z-index: 20;
+        }
+        .info-title { font-weight: bold; color: #2980b9; margin-bottom: 5px; display: block;}
+        .info-text { font-size: 0.95rem; line-height: 1.4; color: #555; }
+
+        .wire {
+            position: absolute; background-image: linear-gradient(0deg, #2c3e50, #5d6d7e 40%, #85929e 60%, #2c3e50);
+            border-radius: 4px; z-index: 1; box-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+        .wire-h { height: 6px; } .wire-v { width: 6px; }
+
+        .bulb-wrapper {
+            position: absolute; display: flex; flex-direction: column; align-items: center;
+            z-index: 10; transition: transform 0.1s;
+        }
+        .bulb-wrapper[onclick] { cursor: pointer; }
+        .bulb-wrapper:active { transform: scale(0.95); }
+
+        .bulb-glass {
+            width: 40px; height: 40px; border-radius: 50%; background-color: var(--bulb-off);
+            border: 2px solid #95a5a6; box-shadow: inset -2px -2px 5px rgba(0,0,0,0.2);
+            position: relative; transition: all 0.3s ease;
+        }
+        .bulb-base {
+            width: 20px; height: 15px; background: linear-gradient(90deg, #7f8c8d, #bdc3c7, #7f8c8d);
+            border: 1px solid #555; margin-top: -2px; border-radius: 0 0 5px 5px;
+            background-image: repeating-linear-gradient(0deg, transparent, transparent 3px, rgba(0,0,0,0.2) 3px, rgba(0,0,0,0.2) 4px);
+        }
+        
+        .lit-dim .bulb-glass { background-color: var(--bulb-dim-color); border-color: #d35400; box-shadow: 0 0 5px var(--bulb-dim-color), inset -2px -2px 5px rgba(0,0,0,0.1); }
+        .lit-normal .bulb-glass { background-color: var(--bulb-norm-color); border-color: #f39c12; box-shadow: 0 0 25px var(--bulb-norm-color), inset -2px -2px 5px rgba(0,0,0,0.1); }
+        .lit-bright .bulb-glass { background-color: var(--bulb-bright-color); border-color: #fff; box-shadow: 0 0 50px var(--bulb-bright-color), 0 0 80px rgba(255, 255, 224, 0.9), inset 0 0 10px #fff; }
+
+        .bulb-wrapper.is-broken .bulb-glass {
+            background-color: #444 !important;
+            box-shadow: none !important;
+            border-color: #333 !important;
+        }
+
+        .battery-group {
+            position: absolute; display: flex; align-items: center; z-index: 5;
+            transition: transform 0.1s;
+        }
+        .battery-group[onclick] { cursor: pointer; }
+        .battery-group:active { transform: scale(0.95); }
+        
+        .battery-body {
+            width: 60px; height: 36px; background: linear-gradient(to bottom, #34495e 0%, #5d6d7e 50%, #2c3e50 100%);
+            border: 2px solid #ecf0f1; border-radius: 4px; box-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 5px; position: relative;
+            transition: all 0.3s;
+        }
+        .battery-cap {
+            width: 8px; height: 18px; background: linear-gradient(to bottom, #bdc3c7, #ecf0f1, #bdc3c7);
+            border: 1px solid #95a5a6; border-right: none; border-radius: 3px 0 0 3px;
+            position: absolute; left: -8px; top: 50%; transform: translateY(-50%); transition: all 0.3s;
+        }
+        .bat-sign { font-weight: 900; font-size: 18px; line-height: 1; }
+        .sign-plus { color: #ff5252; text-shadow: 0 0 4px rgba(255, 82, 82, 0.8); }
+        .sign-minus { color: #448aff; text-shadow: 0 0 4px rgba(68, 138, 255, 0.8); }
+
+        .battery-group.is-dead .battery-body {
+            background: linear-gradient(to bottom, #7f8c8d, #95a5a6) !important;
+            border-color: #7f8c8d !important;
+        }
+        .battery-group.is-dead .battery-cap { background: #95a5a6 !important; }
+        .battery-group.is-dead .sign-plus, 
+        .battery-group.is-dead .sign-minus { color: #bdc3c7 !important; text-shadow: none !important; }
+
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 500px; margin-top: 10px; margin-bottom: 30px;}
+        .btn { 
+            padding: 12px; border: none; border-radius: 8px; font-size: 0.95rem; cursor: pointer; color: white; 
+            transition: all 0.2s; background: #95a5a6; font-family: inherit; line-height: 1.4;
+        }
+        .btn:hover { filter: brightness(1.1); }
+        .btn.active { background: #3498db; box-shadow: 0 2px 5px rgba(0,0,0,0.2); transform: translateY(1px); }
+        
+		/* RWD: 手機直式時，標題過長自動換行 */
+        .mobile-break { display: none; }
+        
+        @media (max-width: 600px) {
+            .mobile-break { display: block; height: 0; }
+            .header-container h1 { font-size: 1rem; }
+            .header-btn { padding: 5px 10px; font-size: 0.85rem; }
+            .header-btn span { display: none; } /* 手機版太窄時，隱藏手指圖示 */
+			.instruction-bar {
+    			font-size: 0.8rem; /* 手機字體縮小 */
+				padding: 5px 15px;
+				width: 90%; /* 手機上寬度稍微放寬 */
+				margin-top: 5px; /* 手機版不使用負邊距，避免太擁擠 */
+				margin-bottom: 10px;
+				flex-direction: row; /* 保持水平排列 */
+				flex-wrap: nowrap; /* 盡量不換行，若字太多會自動縮小 */
+				}
+        }
+
+            .simulation-container { 
+                min-width: 500px; width: 500px; height: 450px;
+                transform: scale(0.65); transform-origin: top center; margin-bottom: -150px; 
+            } 
+            .controls { 
+                width: 500px; transform: scale(0.65); transform-origin: top center; margin-top: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+	<div class="header-container">
+        <h1>
+            <img src="logo.jpg" alt="Logo" class="title-logo" onerror="this.style.display='none'">
+            <div>
+                晟自然輔助系統　<span class="mobile-break"></span>比較串聯與並聯的差異
+            </div>
+        </h1>
+
+        <div class="nav-buttons">
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="header-btn" title="加入官方LINE">
+                <span>👉</span>加 LINE 提問
+            </a>
+            
+            </div>
+    </div>
+
+    <div class="instruction-bar">
+	    <span class="icon">💡</span>
+		<span>請點擊下方按鈕，比較燈泡亮度</span>
+	</div>
+
+    <div class="simulation-container">
+        
+        <div class="circuit-scene" id="scene-A">
+            <div class="wire wire-h" style="width: 240px; top: 40px; left: 130px;"></div>
+            <div class="bulb-wrapper" id="a-b1" style="top: 20px; left: 170px;"><div class="bulb-glass"></div><div class="bulb-base"></div></div>
+            <div class="bulb-wrapper" id="a-b2" style="top: 20px; left: 290px;"><div class="bulb-glass"></div><div class="bulb-base"></div></div>
+            <div class="wire wire-v" style="top: 40px; bottom: 140px; left: 130px;"></div>
+            <div class="wire wire-v" style="top: 40px; bottom: 140px; right: 130px;"></div>
+            <div class="wire wire-h" style="width: 240px; bottom: 140px; left: 130px;"></div>
+            <div class="battery-group" id="a-bat1" style="bottom: 125px; left: 175px;">
+                <div class="battery-cap"></div><div class="battery-body"><span class="bat-sign sign-plus">+</span><span class="bat-sign sign-minus">-</span></div>
+            </div>
+            <div class="battery-group" id="a-bat2" style="bottom: 125px; left: 265px;">
+                <div class="battery-cap"></div><div class="battery-body"><span class="bat-sign sign-plus">+</span><span class="bat-sign sign-minus">-</span></div>
+            </div>
+        </div>
+
+        <div class="circuit-scene" id="scene-B">
+            <div class="wire wire-h" style="width: 240px; top: 40px; left: 130px;"></div>
+            <div class="bulb-wrapper" id="b-b1" style="top: 20px; left: 170px;"><div class="bulb-glass"></div><div class="bulb-base"></div></div>
+            <div class="bulb-wrapper" id="b-b2" style="top: 20px; left: 290px;"><div class="bulb-glass"></div><div class="bulb-base"></div></div>
+
+            <div class="wire wire-v" style="top: 40px; bottom: 140px; left: 130px;"></div>
+            <div class="wire wire-v" style="top: 40px; bottom: 140px; right: 130px;"></div>
+
+            <div class="wire wire-h" style="width: 240px; bottom: 200px; left: 130px;"></div> 
+            <div class="wire wire-h" style="width: 240px; bottom: 140px; left: 130px;"></div> 
+            
+            <div class="battery-group" id="b-bat1" style="bottom: 185px; left: 220px;" onclick="toggleState(this)">
+                <div class="battery-cap"></div><div class="battery-body"><span class="bat-sign sign-plus">+</span><span class="bat-sign sign-minus">-</span></div>
+            </div>
+            <div class="battery-group" id="b-bat2" style="bottom: 125px; left: 220px;" onclick="toggleState(this)">
+                <div class="battery-cap"></div><div class="battery-body"><span class="bat-sign sign-plus">+</span><span class="bat-sign sign-minus">-</span></div>
+            </div>
+        </div>
+
+        <div class="circuit-scene" id="scene-C">
+            <div class="wire wire-h" style="width: 240px; top: 30px; left: 130px;"></div>
+            <div class="wire wire-h" style="width: 240px; top: 100px; left: 130px;"></div>
+            
+            <div class="bulb-wrapper" id="c-b1" style="top: 10px; left: 230px;" onclick="toggleState(this)"><div class="bulb-glass"></div><div class="bulb-base"></div></div>
+            <div class="bulb-wrapper" id="c-b2" style="top: 80px; left: 230px;" onclick="toggleState(this)"><div class="bulb-glass"></div><div class="bulb-base"></div></div>
+            
+            <div class="wire wire-v" style="top: 30px; bottom: 140px; left: 130px;"></div>
+            <div class="wire wire-v" style="top: 30px; bottom: 140px; right: 130px;"></div>
+
+            <div class="wire wire-h" style="width: 240px; bottom: 140px; left: 130px;"></div>
+            <div class="battery-group" id="c-bat1" style="bottom: 125px; left: 175px;">
+                <div class="battery-cap"></div><div class="battery-body"><span class="bat-sign sign-plus">+</span><span class="bat-sign sign-minus">-</span></div>
+            </div>
+            <div class="battery-group" id="c-bat2" style="bottom: 125px; left: 265px;">
+                <div class="battery-cap"></div><div class="battery-body"><span class="bat-sign sign-plus">+</span><span class="bat-sign sign-minus">-</span></div>
+            </div>
+        </div>
+
+        <div class="circuit-scene" id="scene-D">
+            <div class="wire wire-h" style="width: 240px; top: 30px; left: 130px;"></div>
+            <div class="wire wire-h" style="width: 240px; top: 90px; left: 130px;"></div> 
+            
+            <div class="bulb-wrapper" id="d-b1" style="top: 10px; left: 230px;" onclick="toggleState(this)"><div class="bulb-glass"></div><div class="bulb-base"></div></div>
+            <div class="bulb-wrapper" id="d-b2" style="top: 70px; left: 230px;" onclick="toggleState(this)"><div class="bulb-glass"></div><div class="bulb-base"></div></div>
+
+            <div class="wire wire-v" style="top: 30px; bottom: 140px; left: 130px;"></div>
+            <div class="wire wire-v" style="top: 30px; bottom: 140px; right: 130px;"></div>
+
+            <div class="wire wire-h" style="width: 240px; bottom: 200px; left: 130px;"></div>
+            <div class="wire wire-h" style="width: 240px; bottom: 140px; left: 130px;"></div>
+            
+            <div class="battery-group" id="d-bat1" style="bottom: 185px; left: 220px;" onclick="toggleState(this)">
+                <div class="battery-cap"></div><div class="battery-body"><span class="bat-sign sign-plus">+</span><span class="bat-sign sign-minus">-</span></div>
+            </div>
+            <div class="battery-group" id="d-bat2" style="bottom: 125px; left: 220px;" onclick="toggleState(this)">
+                <div class="battery-cap"></div><div class="battery-body"><span class="bat-sign sign-plus">+</span><span class="bat-sign sign-minus">-</span></div>
+            </div>
+        </div>
+
+        <div class="info-panel">
+            <span class="info-title" id="infoTitle">請選擇電路</span>
+            <span class="info-text" id="infoText">請點擊下方按鈕切換不同接法，觀察燈泡亮度變化。</span>
+        </div>
+
+    </div>
+
+    <div class="controls">
+        <button class="btn active" onclick="switchScene('A', this)">燈泡串聯 ＋ 電池串聯</button>
+        <button class="btn" onclick="switchScene('B', this)">燈泡串聯 ＋ 電池並聯</button>
+        <button class="btn" onclick="switchScene('C', this)">燈泡並聯 ＋ 電池串聯</button>
+        <button class="btn" onclick="switchScene('D', this)">燈泡並聯 ＋ 電池並聯</button>
+    </div>
+
+    <script>
+        // 【晟自然系統：自動視窗適配模組】
+		function autoFitSimulation() {
+    		// 1. 取得標準邏輯寬度
+			const logicalWidth = 500; 
+			const logicalHeight = 450;
+			
+			// 2. 抓取當前螢幕寬度 (限制最大不超過 500px，以免電腦版過大)
+			const screenWidth = Math.min(window.innerWidth, 500);
+			
+			// 3. 計算精確縮放比例 (例如: 手機寬 375 / 邏輯寬 500 = 0.75)
+			// 扣除 20px 是為了左右留一點呼吸空間，若想全滿可移除 "- 20"
+			const scale = (screenWidth - 20) / logicalWidth; 
+			
+			// 4. 動態修正 CSS
+			const container = document.querySelector('.simulation-container');
+			const controls = document.querySelector('.controls');
+			
+			// 計算縮放後產生的底部空隙，自動補正 margin-bottom
+			const ghostSpace = logicalHeight * (1 - scale);
+			
+			if (container) {
+			container.style.transform = `scale(${scale})`;
+			container.style.marginBottom = `-${ghostSpace}px`;
+			}
+			if (controls) {
+			controls.style.transform = `scale(${scale})`;
+			}
+		}
+		
+		// 執行適配 (載入時與旋轉螢幕時)
+		window.addEventListener('load', autoFitSimulation);
+		window.addEventListener('resize', autoFitSimulation);
+		
+		window.onload = function() {
+            switchScene('A', document.querySelector('.btn'));
+        }
+
+        function switchScene(mode, btn) {
+            document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+            if(btn) btn.classList.add('active');
+            
+            document.querySelectorAll('.circuit-scene').forEach(s => s.classList.remove('active'));
+            document.getElementById('scene-' + mode).classList.add('active');
+            
+            updatePhysics(mode);
+        }
+
+        // ★★★ 核心邏輯 (完全保留) ★★★
+        function toggleState(element) {
+            const scene = element.closest('.circuit-scene');
+            
+            // 1. 燈泡邏輯：禁止將兩顆都關掉
+            if (element.classList.contains('bulb-wrapper')) {
+                // 如果是「準備關掉」(目前沒壞)，才檢查
+                if (!element.classList.contains('is-broken')) {
+                    const allBulbs = scene.querySelectorAll('.bulb-wrapper');
+                    const brokenBulbs = scene.querySelectorAll('.bulb-wrapper.is-broken');
+                    // 如果壞掉數量 + 1 等於 總數量，表示這次關掉後就全滅了 -> 禁止
+                    if (brokenBulbs.length + 1 >= allBulbs.length) {
+                        return; // 直接結束，不執行 toggle
+                    }
+                }
+                element.classList.toggle('is-broken');
+            } 
+            
+            // 2. 電池邏輯：可以隨意開關
+            else if (element.classList.contains('battery-group')) {
+                element.classList.toggle('is-dead');
+            }
+
+            // 3. 每次點擊後，重新計算電路通斷狀態
+            recalcCircuitState(scene);
+        }
+
+        // 重新計算當前場景的物理狀態
+        function recalcCircuitState(scene) {
+            const sceneId = scene.id;
+            const bulbs = scene.querySelectorAll('.bulb-wrapper');
+            
+            // 檢查電池狀態
+            const allBats = scene.querySelectorAll('.battery-group');
+            const deadBats = scene.querySelectorAll('.battery-group.is-dead');
+            
+            // 只有當「全部電池」都沒電時，才算斷電
+            // (前提是該場景有電池元件，像場景B和D)
+            const isPowerOff = (allBats.length > 0 && allBats.length === deadBats.length);
+
+            bulbs.forEach(b => {
+                // 先移除所有亮度，重置
+                b.classList.remove('lit-dim', 'lit-normal', 'lit-bright');
+
+                // 只有當 (電源有電) 且 (燈泡沒壞) 時，才加回亮度
+                if (!isPowerOff && !b.classList.contains('is-broken')) {
+                    if (sceneId === 'scene-A') b.classList.add('lit-normal');
+                    if (sceneId === 'scene-B') b.classList.add('lit-dim');
+                    if (sceneId === 'scene-C') b.classList.add('lit-bright');
+                    if (sceneId === 'scene-D') b.classList.add('lit-normal');
+                }
+            });
+        }
+
+        function updatePhysics(mode) {
+            // 切換場景時，重置所有狀態為預設 (全亮)
+            document.querySelectorAll('.bulb-wrapper').forEach(b => {
+                b.classList.remove('lit-dim', 'lit-normal', 'lit-bright', 'is-broken');
+            });
+            document.querySelectorAll('.battery-group').forEach(bat => {
+                bat.classList.remove('is-dead');
+            });
+
+            const title = document.getElementById('infoTitle');
+            const text = document.getElementById('infoText');
+
+            if (mode === 'A') {
+                document.getElementById('a-b1').classList.add('lit-normal');
+                document.getElementById('a-b2').classList.add('lit-normal');
+                title.innerText = "燈泡串聯 ＋ 電池串聯";
+                text.innerText = "亮度：普通\n電池串聯電力變大，但是兩個燈泡要平分，所以亮度剛剛好\n情況與１顆電池＋１顆燈泡相同";
+            
+            } else if (mode === 'B') {
+                document.getElementById('b-b1').classList.add('lit-dim');
+                document.getElementById('b-b2').classList.add('lit-dim');
+                title.innerText = "燈泡串聯 ＋ 電池並聯";
+                text.innerText = "亮度：最暗\n電池並聯，等同１顆電池的電力\n微弱的電力還要分給兩個燈泡，所以最暗";
+            
+            } else if (mode === 'C') {
+                document.getElementById('c-b1').classList.add('lit-bright');
+                document.getElementById('c-b2').classList.add('lit-bright');
+                title.innerText = "燈泡並聯 ＋ 電池串聯";
+                text.innerText = "亮度：最亮\n電池串聯電力變大\n並聯的燈泡不用平分電力，每一顆都能吃到飽，所以最亮";
+            
+            } else if (mode === 'D') {
+                document.getElementById('d-b1').classList.add('lit-normal');
+                document.getElementById('d-b2').classList.add('lit-normal');
+                title.innerText = "燈泡並聯 ＋ 電池並聯";
+                text.innerText = "亮度：普通\n電池並聯，等同１顆電池的電力\n並聯燈泡雖然不用平分，但因為電力微弱，所以亮度也就普通\n情況與１顆電池＋１顆燈泡相同";
+            }
+        }
+    </script>
+</body>
+</html>

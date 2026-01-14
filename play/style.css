@@ -1,0 +1,951 @@
+/* * 晟自然輔助系統 - 遊戲室 V14-P9 樣式表
+ * 修正重點：
+ * 1. 強制移除品牌列背景 (修復幽靈色塊)。
+ * 2. 題庫按鈕字體放大。
+ * 3. 競賽模式按鈕佈局重構 (Emoji放大、換行置中)。
+ */
+
+:root {
+    /* 核心變數 */
+    --bg-main: #2b4b82; 
+    
+    --primary-neon: #00d2ff;
+    --accent-neon: #f093fb;
+    --text-main: #ffffff;
+    
+    --rank-1: #ffd700;
+    --rank-2: #e0e0e0;
+    --rank-3: #cd7f32;
+    
+    --f1-red: #ff1801; 
+    --tour-gold: #f1c40f;
+    --tour-p1: #e74c3c; 
+    --tour-p2: #3498db; 
+
+    --input-height: 50px;
+    --btn-height: 60px;
+    
+    --viewer-safe-top: 60px;
+    --viewer-safe-bottom: 10px;
+    
+    --nav-height: 50px;
+}
+
+/* 基礎設定 */
+html {
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    background-color: var(--bg-main);
+    background-image: none;
+}
+
+body {
+    margin: 0; padding: 0;
+    position: fixed; 
+    top: 0; left: 0; right: 0; bottom: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    overscroll-behavior: none;
+    -webkit-user-select: none; user-select: none;
+    font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    color: var(--text-main);
+    touch-action: none; 
+    background: transparent;
+}
+
+* {
+    -ms-overflow-style: none;  
+    scrollbar-width: none;  
+}
+*::-webkit-scrollbar { display: none; }
+
+#app-container {
+    width: 100%; 
+    height: 100dvh; 
+    max-width: 480px; 
+    margin: 0 auto;
+    position: relative; display: flex; flex-direction: column; overflow: hidden;
+    background: transparent;
+    padding-top: max(var(--viewer-safe-top), env(safe-area-inset-top));
+    padding-bottom: max(var(--viewer-safe-bottom), env(safe-area-inset-bottom));
+    box-sizing: border-box;
+}
+
+/* 警報動畫 */
+@keyframes alarm-flash {
+    0%, 100% { box-shadow: inset 0 0 0 red; }
+    50% { box-shadow: inset 0 0 50px rgba(255, 0, 0, 0.8); }
+}
+.critical-alarm {
+    animation: alarm-flash 1s infinite ease-in-out;
+    border: 1px solid rgba(255, 0, 0, 0.5) !important;
+}
+
+/* 電腦版適配 */
+@media (min-width: 481px) {
+    #app-container { 
+        height: 95vh; max-height: 900px;
+        border-radius: 30px; 
+        border: 1px solid rgba(255,255,255,0.1);
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.3);
+        top: 50%; transform: translateY(-50%);
+        padding-top: 20px; padding-bottom: 20px;
+        background: transparent; 
+    }
+    body { position: relative; background: #1a1a1a;}
+}
+
+.screen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    padding: 0 15px 0 15px; 
+    padding-top: max(var(--viewer-safe-top), env(safe-area-inset-top));
+    padding-bottom: 0; 
+    box-sizing: border-box;
+    display: flex; flex-direction: column;
+    background: transparent; 
+    transition: opacity 0.4s ease;
+    opacity: 0; pointer-events: none; z-index: 0;
+}
+.screen.active { opacity: 1; pointer-events: auto; z-index: 10; }
+.screen.f1-theme, .screen.tour-theme { background: transparent; z-index: 20; }
+
+/* 導覽列 */
+.app-nav-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    width: 100%; height: var(--nav-height);
+    background: transparent;
+    border-bottom: none; box-shadow: none;
+    margin-bottom: 10px;
+    padding: 0 14px; box-sizing: border-box;
+    flex-shrink: 0; border-radius: 0;
+}
+
+.nav-left, .nav-right {
+    width: 60px; 
+    display: flex; align-items: center; justify-content: flex-start;
+}
+.nav-center {
+    flex-grow: 1; text-align: center;
+	/* 👇 1. 改這裡控制字體大小 */
+    font-size: 1.5rem;
+	font-weight: bold;
+	/* 👇 2. 改這裡控制顏色 */
+	color: var(--primary-neon);
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+.nav-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.2);
+    color: white;
+    border-radius: 8px;
+    padding: 0; 
+    width: 36px; height: 36px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9rem; font-weight: bold; cursor: pointer;
+}
+.nav-btn:active { background: rgba(255,255,255,0.2); transform: translateY(1px); }
+.nav-btn svg { width: 20px; height: 20px; fill: white; }
+
+/* 大廳 Header */
+.header-section {
+    margin-top: 15px; 
+    margin-bottom: 25px;
+    display: flex; flex-direction: column; align-items: center;
+    flex-shrink: 0;
+    background: transparent !important; /* 確保無背景 */
+}
+
+/* --- [V14-P9 修正] 強制去背品牌列 --- */
+.brand-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; margin-bottom: 20px;
+    
+    /* 強制透明 */
+    background: transparent !important; 
+    backdrop-filter: none !important;
+    border: none !important; 
+    box-shadow: none !important;
+    
+    padding: 10px 25px;
+    cursor: pointer; z-index: 9999;
+    transition: all 0.3s ease;
+}
+.brand-row:active { transform: scale(0.98); }
+
+.logo-img { height: 32px; width: auto; pointer-events: none; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+.system-title { 
+    font-size: 1.3rem; font-weight: 900; color: #ffffff; 
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    letter-spacing: 1.5px; pointer-events: none;
+}
+
+.title-area {
+    display: flex; align-items: center; justify-content: center;
+    gap: 10px; width: 100%; flex-wrap: nowrap; overflow: visible;
+}
+
+/* 手勢動畫 */
+.tap-hand {
+    font-size: 2rem; flex-shrink: 0; display: inline-block;
+    animation: tap-vertical 0.08s infinite alternate;
+}
+.left-hand { transform-origin: center; animation-delay: 0s; }
+.right-hand { transform-origin: center; animation-delay: 0.04s; }
+
+@keyframes tap-vertical {
+    0% { transform: translateY(0) scale(1); }
+    100% { transform: translateY(5px) scale(1.1); }
+}
+
+/* Glitch Title */
+.glitch-wrapper { position: relative; display: inline-block; }
+.glitch-wrapper h1 {
+    font-size: 2.4rem; margin: 0; line-height: 1.2; font-weight: 900;
+    color: #fff; position: relative; letter-spacing: 2px;
+}
+.glitch-wrapper h1::before, .glitch-wrapper h1::after {
+    content: attr(data-text); position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: var(--bg-main); opacity: 0.8;
+}
+.glitch-wrapper h1::before {
+    left: 2px; text-shadow: -1px 0 #ff00c1; clip-path: inset(44% 0 61% 0);
+    animation: glitch-anim-1 2s infinite linear alternate-reverse;
+}
+.glitch-wrapper h1::after {
+    left: -2px; text-shadow: -1px 0 #00fff9; clip-path: inset(50% 0 30% 0);
+    animation: glitch-anim-2 2.5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim-1 {
+    0% { clip-path: inset(20% 0 80% 0); } 20% { clip-path: inset(60% 0 10% 0); }
+    40% { clip-path: inset(40% 0 50% 0); } 60% { clip-path: inset(80% 0 5% 0); }
+    80% { clip-path: inset(10% 0 70% 0); } 100% { clip-path: inset(30% 0 20% 0); }
+}
+@keyframes glitch-anim-2 {
+    0% { clip-path: inset(10% 0 60% 0); } 20% { clip-path: inset(30% 0 10% 0); }
+    40% { clip-path: inset(70% 0 20% 0); } 60% { clip-path: inset(20% 0 50% 0); }
+    80% { clip-path: inset(50% 0 10% 0); } 100% { clip-path: inset(5% 0 80% 0); }
+}
+
+/* 排行榜 */
+.leaderboard-container {
+    display: grid; 
+	grid-template-columns: 1fr 1fr; 
+	grid-template-rows: 1fr;
+    gap: 12px; 
+	margin-bottom: 20px; 
+	
+	flex-grow: 1;  /* 自動佔滿剩餘空間 */
+	
+    flex-shrink: 1; min-height: 300px;
+}
+.mode-box {
+    background: rgba(0, 0, 0, 0.2); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; display: flex; flex-direction: column;
+    overflow: hidden; position: relative; cursor: pointer; transition: border-color 0.2s;
+}
+.mode-box:active { border-color: var(--primary-neon); }
+
+.mode-header {
+    background: rgba(0, 0, 0, 0.2); padding: 5px 0; text-align: center;
+    font-size: 0.85rem; font-weight: bold; color: var(--primary-neon);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.mini-tabs { display: flex; background: rgba(0,0,0,0.1); border-bottom: 1px solid rgba(255,255,255,0.05); }
+.mini-tab {
+    flex: 1; text-align: center; padding: 4px 0; font-size: 0.7rem; color: #aaa; cursor: pointer; transition: all 0.2s;
+}
+.mini-tab.active {
+    background: rgba(255,255,255,0.1); color: white; font-weight: bold;
+    box-shadow: inset 0 -2px 0 var(--accent-neon);
+}
+
+.scrollable-y { overflow-y: auto; -webkit-overflow-scrolling: touch; touch-action: pan-y; }
+/* 設定排行榜列表的高度與外觀 */
+.tower-list {
+    height: 800px;           /* 設定固定高度 (數字越大框越長) */
+    overflow-y: auto;        /* 資料太多時顯示捲軸 */
+    background: rgba(0, 0, 0, 0.2); /* 稍微深色的背景 */
+    padding: 10px;           /*內距 */
+    margin-top: 5px;         /* 與上方選單的距離 */
+}
+
+.rank-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.75rem; padding: 5px 2px; border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.rank-row.f1-row { display: grid; grid-template-columns: 20px 1fr 1fr 1fr; gap: 2px; }
+.rank-row.tour-row { display: grid; grid-template-columns: 20px 1fr 1fr 1fr; gap: 2px; }
+.rank-row.f1-row .rank-pts { text-align: center; color: var(--f1-red); }
+.rank-row.f1-row .rank-time { text-align: right; }
+.rank-rounds { text-align: center; color: var(--tour-gold); font-weight: bold;}
+.rank-avg { text-align: right; color: #aaa; font-family: monospace; }
+.rank-idx { font-weight: bold; width: 16px; text-align: center; margin-right: 2px; font-size: 0.8rem;} 
+.rank-name { flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ddd; }
+.rank-time { color: var(--accent-neon); font-family: monospace; font-weight: bold; margin-left: 2px; }
+
+/* 底部按鈕區 */
+.footer-action { 
+    margin-top: auto; padding-bottom: 30px; width: 100%; display: flex; justify-content: center;
+}
+
+.start-btn {
+    width: 85%; max-width: 320px; height: 70px;
+    padding: 0; border: none; border-radius: 35px; background: transparent;
+    position: relative; cursor: pointer; overflow: hidden; box-shadow: none; 
+    transition: transform 0.1s;
+}
+.start-btn:active { transform: scale(0.96); }
+.start-btn::before {
+    content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: linear-gradient(90deg, #00c6ff, #0072ff); z-index: 1; border-radius: 35px;
+}
+.start-btn::after {
+    content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 60%);
+    opacity: 0; transform: scale(0.5); animation: btn-pulse 2s infinite; z-index: 2;
+}
+@keyframes btn-pulse {
+    0% { opacity: 0; transform: scale(0.5); }
+    50% { opacity: 0.3; transform: scale(1); }
+    100% { opacity: 0; transform: scale(1.5); }
+}
+
+.btn-text {
+    position: relative; z-index: 3; font-size: 1.8rem; font-weight: 900; color: white;
+    letter-spacing: 3px; text-shadow: 0 2px 5px rgba(0,0,0,0.3); font-style: italic;
+}
+.btn-glow {
+    position: absolute; top: 2px; left: 2px; right: 2px; bottom: 2px;
+    border-radius: 33px; border: 2px solid rgba(255,255,255,0.3); z-index: 3; pointer-events: none;
+}
+
+/* 輸入頁面 */
+.section-label { color: var(--primary-neon); font-size: 1rem; font-weight: bold; margin-bottom: 5px; margin-top: 5px;}
+.input-header { position: relative; display: flex; align-items: center; justify-content: center; height: 50px; margin-bottom: 10px; }
+.input-row { display: flex; gap: 12px; width: 100%; }
+.input-group { display: flex; flex-direction: column; flex: 1; }
+.input-group label { color: #ccc; font-size: 0.9rem; margin-bottom: 4px; }
+
+.input-field {
+    background: rgba(255,255,255,0.1); border: 1px solid var(--primary-neon);
+    color: white; border-radius: 10px; padding: 0 15px; height: var(--input-height);
+    font-size: 1.1rem; width: 100%; box-sizing: border-box; transition: all 0.3s;
+}
+.input-field:focus { outline: none; background: rgba(255,255,255,0.2); box-shadow: 0 0 10px var(--primary-neon); }
+
+.input-error {
+    animation: shakeRed 0.5s ease-in-out; border-color: #ff4d4d !important;
+    box-shadow: 0 0 15px rgba(255, 77, 77, 0.6) !important; background: rgba(255, 77, 77, 0.1) !important;
+}
+@keyframes shakeRed {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-5px); }
+    40% { transform: translateX(5px); }
+    60% { transform: translateX(-5px); }
+    80% { transform: translateX(5px); }
+}
+
+.bank-selector { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
+
+/* --- [V14-P9 修正] 題庫按鈕文字放大 --- */
+.bank-btn {
+    flex: 1; min-width: 80px; height: var(--input-height);
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 10px; color: white; font-weight: bold; cursor: pointer;
+    transition: 0.2s; white-space: nowrap;
+    font-size: 1.2rem; /* 字體放大 */
+	touch-action: manipulation;
+}
+.bank-btn.selected {
+    background: var(--primary-neon); color: black; border-color: var(--primary-neon);
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.5);
+}
+
+.mode-container { display: flex; flex-direction: column; gap: 10px; flex-grow: 1; }
+.mode-row { display: flex; gap: 10px; } 
+
+/* --- [V14-P9 修正] 模式按鈕重構 (Emoji放大、換行) --- */
+.mode-btn {
+    flex: 1; height: 85px; /* 增加高度以容納換行 */
+    background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px; color: #ccc; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    transition: 0.2s; 
+    gap: 4px; /* Emoji 與文字間距 */
+}
+.mode-btn .m-emoji {
+    font-size: 2.2rem; /* Emoji 變大 */
+    line-height: 1;
+}
+.mode-btn .m-text {
+    font-size: 1.1rem; /* 文字變大 */
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.mode-btn.selected {
+    background: var(--accent-neon); color: black; border-color: var(--accent-neon);
+    box-shadow: 0 0 15px rgba(240, 147, 251, 0.5);
+}
+.mode-btn.selected .m-text { font-weight: 900; }
+
+.footer-btns { display: flex; flex-direction: column; gap: 10px; margin-top: auto; padding-bottom: 20px;}
+
+/* --- 修改遊戲設定底下按鈕大小與文字大小 --- */
+.btn-thick {
+    width: 100%;
+	/* 👇 1. 改這裡控制按鈕高度 (原本是變數，約 60px) */
+	height: var(--btn-height);
+	border-radius: 30px;
+	border: none;
+	/* 👇 2. 改這裡控制文字大小 */
+    font-size: 1.5rem; font-weight: bold; cursor: pointer; transition: 0.2s;
+	touch-action: manipulation;
+}
+
+/* --- 修改遊戲設定底下按鈕顏色 --- */
+.btn-start { 
+    background: var(--primary-neon);
+	color: white;
+	/* 👇 3. 這是發光效果，顏色要跟著背景色調整，不然會怪怪的 */
+	box-shadow: 0 0 15px rgba(0, 210, 255, 0.4); }
+
+.btn-back { background: rgba(255,255,255,0.15); color: white; backdrop-filter: blur(5px); }
+.btn-thick:active { transform: scale(0.98); }
+
+.setting-row { margin-bottom: 15px; width: 100%; }
+.setting-label { display: block; color: #aaa; margin-bottom: 5px; font-size: 1rem; }
+select {
+    width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #555;
+    background: rgba(255,255,255,0.1); color: white; font-size: 1rem; box-sizing: border-box;
+}
+select option { background: #222; }
+
+.stepper-container {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: rgba(255,255,255,0.1); border-radius: 10px; padding: 5px; border: 1px solid #555;
+}
+.step-btn {
+    width: 50px; height: 50px; border-radius: 8px; border: none;
+    background: #333; color: white; font-size: 1.5rem; font-weight: bold;
+    cursor: pointer; transition: 0.1s;
+}
+.step-btn:active { background: #555; transform: scale(0.95); }
+.step-display {
+    flex-grow: 1; text-align: center; font-size: 2rem; font-weight: bold; color: var(--primary-neon);
+    font-family: monospace;
+}
+
+.btn-f1-red { background: var(--f1-red); color: white; box-shadow: 0 0 15px rgba(255, 24, 1, 0.4); border:none; }
+.btn-tour-gold { background: var(--tour-gold); color: black; box-shadow: 0 0 15px rgba(241, 196, 15, 0.4); border:none; }
+
+.ready-box { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+.next-player-label { font-size: 1.2rem; color: #aaa; margin-bottom: 10px; }
+.next-player-name { font-size: 3rem; font-weight: bold; color: var(--primary-neon); margin-bottom: 30px; text-align: center;}
+
+.rank-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; margin-top: 10px; }
+.rank-table th { text-align: left; color: #aaa; border-bottom: 1px solid #555; padding: 5px;}
+.rank-table td { padding: 8px 5px; border-bottom: 1px solid rgba(255,255,255,0.1); color:white;}
+.hl-score { color: var(--accent-neon); font-weight: bold; }
+.hl-points { color: var(--primary-neon); font-weight: bold; text-align: left; }
+
+.reg-grid {
+    display: flex; flex-direction: column; gap: 12px; 
+    max-height: 450px; padding: 5px 10px;
+}
+.reg-input {
+    width: 100%; background: rgba(255,255,255,0.1); border: 1px solid #555;
+    color: white; padding: 0 15px; border-radius: 8px; text-align: left;
+    height: 55px; font-size: 1.2rem; box-sizing: border-box; transition: border-color 0.2s; flex-shrink: 0;
+}
+.reg-input:focus { border-color: var(--tour-gold); background: rgba(255,255,255,0.15); outline: none; }
+
+.vs-container {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    height: 100%; flex-grow: 1;
+}
+.vs-card {
+    width: 80%; max-width: 320px; padding: 15px; margin: 10px 0; 
+    border-radius: 15px; border: 2px solid transparent; text-align: center;
+    transition: all 0.5s ease; position: relative;
+}
+.vs-card-p1 { border-color: var(--tour-p1); background: rgba(231, 76, 60, 0.15); box-shadow: 0 0 15px rgba(231, 76, 60, 0.2); }
+.vs-card-p2 { border-color: var(--tour-p2); background: rgba(52, 152, 219, 0.15); box-shadow: 0 0 15px rgba(52, 152, 219, 0.2); }
+
+.vs-winner { transform: scale(1.15); z-index: 10; border-color: #ffd700; background: rgba(255, 215, 0, 0.3); box-shadow: 0 0 40px rgba(255, 215, 0, 0.8); }
+.vs-loser { transform: scale(0.9); opacity: 0.4; filter: grayscale(100%); }
+
+.vs-stage { font-size: 1.5rem; color: var(--tour-gold); font-weight: bold; margin-bottom: 20px; }
+.vs-player { font-size: 2rem; font-weight: bold; color: white; margin: 10px 0; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+.vs-v { font-size: 1.5rem; color: #888; font-style: italic; font-weight: 900; margin: 5px 0; }
+
+.podium { 
+    display: flex; 
+    align-items: flex-end; 
+    justify-content: center; 
+    height: 250px; 
+    gap: 15px; 
+    margin-bottom: 20px; 
+    margin-top: 80px;}
+.podium-bar { width: 90px; background: linear-gradient(to top, #c0392b, #e74c3c); border-radius: 10px 10px 0 0; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: 10px; position: relative;}
+.p-1 { height: 220px; background: linear-gradient(to top, #f1c40f, #f39c12); z-index: 2; box-shadow: 0 0 30px rgba(241, 196, 15, 0.6); border: 2px solid #fff; }
+.p-2 { height: 160px; background: linear-gradient(to top, #bdc3c7, #ecf0f1); z-index: 1; }
+.p-3 { height: 110px; background: linear-gradient(to top, #d35400, #e67e22); z-index: 1; }
+.p-rank { font-size: 2.5rem; font-weight: bold; color: rgba(0,0,0,0.5); }
+.p-name { position: absolute; top: -35px; width: 120px; text-align: center; font-weight: bold; font-size: 1rem; text-shadow: 0 1px 2px black; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crown-icon { position: absolute; top: -90px; left: 50%; transform: translateX(-50%); font-size: 2rem; filter: drop-shadow(0 0 10px #f1c40f); animation: float-crown 2s ease-in-out infinite; }
+.pts-disp { position: absolute; bottom: -25px; left: 50%; transform: translateX(-50%); font-size: 0.85rem; color: #aaa; font-weight: bold; white-space: nowrap; }
+
+.podium-list { width: 90%; margin-top: 20px; background: rgba(255,255,255,0.05); border-radius: 10px; padding: 10px; max-height: 180px; border: 1px solid rgba(255,255,255,0.1); }
+.p-row { display: flex; justify-content: space-between; padding: 8px 5px; border-bottom: 1px solid rgba(255,255,255,0.1); color: #ccc; font-size: 0.9rem; }
+.p-row:last-child { border-bottom: none; }
+.p-idx { font-weight: bold; width: 25px; text-align: center; color: #888; }
+.p-n { flex-grow: 1; text-align: left; padding-left: 10px; }
+.p-s { font-family: monospace; color: var(--accent-neon); }
+
+@keyframes float-crown { 0%, 100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-5px); } }
+
+.btn { border-radius: 30px; margin-bottom: 12px; padding: 12px; border:none; width:100%; cursor:pointer; font-size:1rem;}
+.btn-secondary { background: rgba(255,255,255,0.2); color:white;}
+
+/* 遊戲區塊 */
+#screen-game { 
+    background: transparent; /* 改這裡可以換底色 (顏色 + 透明度) */
+    border-radius: 20px; /* 改這裡可以調整圓角 */
+	margin: 10px;
+	height: calc(100% - 20px);
+	width: calc(100% - 20px);
+	box-sizing:border-box;
+	border: none solid rgba(255,255,255,0.3); /* 👇 改這裡可以換邊框顏色 */
+}
+
+/* 生存模式血條 */
+.life-bar-container { 
+    width: auto; 
+	height: 10px; 
+	background: #bdbdbd; 
+	border-radius: 3px; 
+	/* margin-top: 5px;  */
+    margin: 5px 12px 0 12px; /* 血條左右寬度 */
+	overflow: hidden; 
+	display: none;
+	}
+.life-bar-fill { 
+    height: 100%; 
+	background: #e7240e; 
+	width: 100%; 
+	transition: width 0.1s linear; 
+	}
+
+#game-grid { 
+    display: grid;
+	/* 👇 卡片之間的距離 */
+	gap: 15px;
+	padding: 10px;
+	height: calc(100% - 90px);
+	/* 👇 這裡控制「幾直幾橫」，目前是 3直(columns) x 4橫(rows) */
+	grid-template-columns: repeat(3, 1fr);
+	grid-template-rows: repeat(4, 1fr);
+	box-sizing: border-box; }
+
+.card { 
+    /* --- 1. 基礎外觀 (保持不動) --- */
+    width: 100%; 
+    height: 100%; 
+    background: #333; 
+    color: #ffffff; 
+    border-radius: 10px; 
+    border: 3px solid #bdbdbd; 
+
+    /* --- 2. 排版定位 (關鍵修正) --- */
+    display: flex; 
+    justify-content: center; /* 水平置中 */
+    align-items: center;     /* 垂直置中 */
+    text-align: center;      /* 讓換行後的文字依然置中 */
+
+    /* --- 3. 文字行為 (這裡改回原樣) --- */
+    /* 允許換行，這樣文字才不會被左右切掉，也不會變成 ... */
+    white-space: normal;  
+    
+    /* 確保長單字也能正確斷行，不會撐爆卡片 */
+    word-break: break-word; 
+    
+    /* 行距設小一點，讓多行文字比較容易塞進去 */
+    line-height: 1.1; 
+
+    /* --- 4. 互動與其他 (保持不動) --- */
+    padding: 2px; /* 給一點點內距就好，爭取最大空間 */
+    box-sizing: border-box;
+    cursor: pointer; 
+    user-select: none; 
+    transition: transform 0.1s; 
+    box-shadow: 0 3px 5px rgba(0,0,0,0.3); 
+    overflow: hidden; /* 確保圓角不被內容蓋住 */
+}
+
+.card:active { transform: scale(0.95); }
+
+/* 👇 當卡片「被選中」時的樣子 */
+.card.active { 
+    border-color: var(--primary-neon); 
+	background-color: #004d40; 
+	color: #00e5ff; }
+
+.card.matched { visibility: hidden; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+
+/* 👇 當卡片「答錯」時的樣子 */
+.card.error { 
+    background-color: #5a1a1a; 
+	border-color: #e74c3c; 
+	animation: shake 0.15s; }
+
+.card img { width: 100%; height: 100%; object-fit: contain; pointer-events: none; padding: 5px; box-sizing: border-box; }
+@media (max-width: 400px) { .card.font-lg { font-size: 1.6rem; } .card.font-md { font-size: 1.0rem; } .card.font-sm { font-size: 0.8rem; } }
+
+@keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+@keyframes flashRed { 0% { color: #ff4d4d; transform: scale(1.2); } 100% { color: #fff; transform: scale(1); } }
+.timer-penalty { animation: flashRed 0.5s ease-out; }
+
+#res-score { color: var(--primary-neon) !important; text-shadow: 0 0 20px rgba(0,210,255,0.5); }
+#history-list { background: rgba(0,0,0,0.2); border-radius: 10px; padding: 10px; flex-grow:1; }
+.hist-row { 
+    display: grid; 
+    /* 名字(彈性) | 學校(固定短) | 日期(固定) | 成績(彈性靠右) */
+    grid-template-columns: 1fr 50px 70px 1fr; 
+    gap: 5px; /* 欄位間距 */
+    align-items: center; 
+    border-bottom: 1px solid rgba(255,255,255,0.1); 
+    padding: 8px 0; 
+    color: white; 
+    font-size: 0.95rem; /* 整體字體微調 */
+}
+.hist-name { 
+    text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: bold;}
+.hist-date { 
+    text-align: center; color: #666; font-size: 0.75rem; }
+.hist-score { 
+    text-align: right; font-weight: bold; }
+.hist-school {
+    text-align: center;
+    color: #aaa;       /* 使用次要顏色，不搶名字風采 */
+    font-size: 0.9rem;
+    font-weight: bold;
+    background: rgba(255,255,255,0.1); /* 給個淡背景，像Badge */
+    border-radius: 4px;
+    padding: 2px 0;
+}
+
+.admin-menu { display: flex; flex-direction: column; gap: 15px; justify-content: center; align-items: center; height: 100%; }
+.btn-admin { width: 80%; max-width: 300px; padding: 15px; border-radius: 12px; border:none; font-size: 1.2rem; font-weight: bold; cursor: pointer; color: white; box-shadow: 0 4px 10px rgba(0,0,0,0.3); transition: transform 0.1s; }
+.btn-admin:active { transform: scale(0.95); }
+.btn-save { background: #27ae60; }
+.btn-import { background: #f39c12; }
+.btn-clear { background: #c0392b; }
+
+.debug-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.85); z-index: 50; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 15px; }
+.debug-btn { width: 70%; padding: 12px; font-size: 1.1rem; border-radius: 8px; border: 1px solid #555; background: #333; color: white; cursor: pointer; font-weight: bold; }
+.debug-btn:active { background: #555; }
+.hidden-file-input { display: none; }
+
+/* --- [晟自然] 遊戲畫面專用：絕對置中與邊距調整 --- */
+
+/* 1. 設定導覽列為定位基準 */
+#screen-game .app-nav-bar {
+    position: relative; /* 這一行很重要，讓中間文字知道要對齊這條橫槓 */
+}
+
+/* 2. 讓中間的 ID (nav-center) 強制絕對置中 */
+#screen-game .nav-center {
+    position: absolute;       /* 脫離排隊隊伍，浮起來 */
+    left: 50%;                /* 設在容器的 50% 處 */
+    transform: translateX(-50%); /* 修正自身的寬度，達成完美置中 */
+    
+    width: auto;              /* 寬度自動 */
+    max-width: 50%;           /* 限制最大寬度，避免名字太長蓋住左右按鈕 */
+    white-space: nowrap;      /* 不換行 */
+    overflow: hidden;         /* 超出隱藏 */
+    text-overflow: ellipsis;  /* 變成... */
+    
+    text-align: center;       /* 文字置中 */
+}
+
+/* 3. 調整左上角「房子按鈕」的位置 */
+#screen-game .nav-left {
+    /* 因為中間已經浮起來了，這裡不需要擔心擠壓，盡情調整 */
+    padding-left: 3px; 
+}
+
+/* 4. 調整右上角「計時器」的位置 */
+#screen-game .nav-right {
+    justify-content: flex-end; 
+    padding-right: 3px; 
+    
+    /* 這裡可以設寬一點也沒關係，不會影響中間的置中了 */
+    width: 100px; 
+}
+
+/* --- [晟自然] 移除密碼輸入框預設的顯示/隱藏眼睛圖示 --- */
+input[type="password"]::-ms-reveal,
+input[type="password"]::-ms-clear {
+    display: none;
+}
+input[type="password"]::-webkit-password-reveal-button {
+    display: none; 
+    -webkit-appearance: none;
+}
+
+/* --- [晟自然] 針對 F1 按鈕 Emoji 進行視覺放大補償 --- */
+#m-f1 .m-emoji {
+    font-size: 2.5rem; /* 原本通用設定是 2.2rem，這裡單獨放大 */
+    transform: scale(1.1); /* 或者用縮放的方式微調，更有彈性 */
+}
+
+/* --- [晟自然] 錦標賽設定頁專屬樣式 --- */
+#screen-tour-setup .setting-label {
+    color: var(--tour-gold); /* 使用錦標賽的主題金黃色 */
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+#screen-tour-setup select {
+    border-color: var(--tour-gold); /* 下拉選單邊框也改成金色 */
+    color: white;
+}
+
+/* 讓加減按鈕被按下時也有金色回饋 */
+#screen-tour-setup .step-btn:active {
+    background: var(--tour-gold);
+    color: black;
+}
+
+/* --- [晟自然] F1 賽制設定頁專屬樣式 (極速紅風格) --- */
+
+/* 1. 設定選項的標題：使用 F1 紅色並加上微弱霓虹光 */
+#screen-f1-setup .setting-label {
+    color: var(--f1-red); /* 讀取系統定義的紅色 */
+    font-size: 1.1rem;
+    font-weight: bold;
+    text-shadow: 0 0 10px rgba(255, 24, 1, 0.3); /* 增加速度感的光暈 */
+}
+
+/* 2. 下拉選單：邊框變紅 */
+#screen-f1-setup select {
+    border: 1px solid var(--f1-red);
+    color: white;
+    background-color: rgba(0, 0, 0, 0.2); /* 稍微加深底色讓文字更清楚 */
+}
+
+/* 3. 數字加減框：外框加入淡淡的紅色 */
+#screen-f1-setup .stepper-container {
+    border: 1px solid rgba(255, 24, 1, 0.3);
+}
+
+/* 4. 加減按鈕：點擊(Active)時變成亮紅色，給予強烈回饋 */
+#screen-f1-setup .step-btn:active {
+    background: var(--f1-red);
+    color: white;
+    transition: background 0.1s;
+}
+
+/* 5. (選項) 如果該頁面有「開始排位賽」按鈕，也可以強制改成紅色系 */
+#screen-f1-setup .btn-primary {
+    background: linear-gradient(135deg, #cc0000 0%, #ff4d4d 100%);
+    box-shadow: 0 0 15px rgba(255, 0, 0, 0.4);
+    border: none;
+}
+
+/* --- [晟自然] 錦標賽選手輸入畫面排版優化 --- */
+
+/* 1. 設定該畫面主容器：內容從上方開始排列，不要硬撐開 */
+#screen-tour-input {
+    justify-content: flex-start; /* 預設可能是 space-between，改成從頭開始排 */
+    gap: 30px; /* 設定 導覽列、輸入區、按鈕區 之間的間距 */
+}
+
+/* 2. 輸入框列表區域：給予一些彈性，但不要強制撐大 */
+#screen-tour-input .input-list-container {
+    flex: 0 1 auto; /* 關鍵：0=不放大, 1=可縮小, auto=依內容大小 */
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 20px; /* 讓輸入框距離導覽列稍微遠一點，比較透氣 */
+}
+
+/* 3. 底部按鈕區域：移除置底強制性 */
+#screen-tour-input .bottom-action-area {
+    margin-top: 0; /* 移除可能的 margin-top: auto */
+    padding-bottom: 40px; /* 底部留一點緩衝空間，以免太貼螢幕邊緣 */
+}
+
+/* --- [晟自然] 錦標賽報到頁：按鈕置底 + 中間滿版延伸 --- */
+
+/* 1. 確保該頁面容器是彈性直向排列，且高度佔滿 */
+#screen-tour-reg {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* 確保容器有高度，內部元素才能撐開 */
+}
+
+/* 2. 輸入名單區 (中間區塊) */
+#screen-tour-reg .reg-grid {
+    /* 【關鍵】flex: 1 代表「自動填滿剩餘空間」 */
+    /* 這會讓輸入框的容器一路延伸到最下方的按鈕上面 */
+    flex: 1; 
+    
+    /* 移除原本的高度限制，讓它能無限延伸 */
+    max-height: none; 
+    
+    /* 確保內容溢出時是在這個區域內滾動 */
+    overflow-y: auto;
+    
+    /* 讓輸入框從上面開始排 (不要分散對齊) */
+    justify-content: flex-start;
+    
+    /* 修正內邊距，避免內容被切掉 */
+    padding-bottom: 20px;
+    box-sizing: border-box;
+}
+
+/* 3. 底部按鈕區 */
+#screen-tour-reg .footer-btns {
+    /* 防止按鈕區被壓縮 */
+    flex-shrink: 0;
+    
+    /* 確保按鈕區貼齊底部，並給一點呼吸空間 */
+    margin-top: 0; 
+    padding-bottom: 20px;
+}
+
+
+
+/* =========================================
+   【晟自然】極簡下拉選單 (Select Button Style)
+   ========================================= */
+
+.dropdown-row {
+    display: flex;
+    gap: 10px;           /* 兩個按鈕中間的縫隙 */
+    width: 100%;
+    margin-bottom: 20px; /* 與下方開始按鈕的距離 */
+}
+
+/* 按鈕外殼 */
+.select-wrapper {
+    position: relative;
+    flex: 1;             /* 左右平分寬度 */
+    height: 55px;        /* 按鈕高度，好點擊 */
+    background: rgba(255, 255, 255, 0.05); /* 玻璃底色 */
+    border: 1px solid rgba(255, 255, 255, 0.3); /* 邊框 */
+    border-radius: 12px; /* 圓角 */
+    transition: 0.3s;
+}
+
+/* 當被點擊或選取時發光 */
+.select-wrapper:focus-within {
+    border-color: var(--primary-neon);
+    box-shadow: 0 0 15px rgba(0, 210, 255, 0.3);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+/* 真正的 Select 元素 (透明覆蓋在上面) */
+.select-wrapper select {
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 1.1rem;      /* 字體放大 */
+    font-weight: bold;
+    padding: 0 15px;
+    appearance: none;       /* 隱藏預設醜醜的箭頭 */
+    -webkit-appearance: none;
+    cursor: pointer;
+    outline: none;
+    position: relative;
+    z-index: 2;
+}
+
+/* 下拉選單裡的選項顏色 (避免在白底手機上看不見) */
+.select-wrapper select option {
+    background: #1a1a2e; /* 深色背景 */
+    color: white;
+}
+
+/* 自製的箭頭圖示 */
+.select-arrow {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--primary-neon);
+    font-size: 0.8rem;
+    pointer-events: none; /* 讓點擊穿透到 select */
+    z-index: 1;
+}
+
+/* style.css 新增 */
+
+.lb-box-select {
+    width: 90%;
+    margin: 5px auto 10px auto;
+    display: block;
+    background-color: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 5px;
+    font-size: 0.9rem;
+    outline: none;
+}
+
+/* 確保選單在點擊時有明顯反應 */
+.lb-box-select:focus {
+    border-color: #00d2ff;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
+/* style.css 新增 */
+
+/* 雙選單的容器：並排顯示 */
+.lb-controls-row {
+    display: flex;
+    gap: 5px;             /* 兩個選單中間的間距 */
+    width: 90%;
+    margin: 5px auto 10px auto;
+}
+
+/* style.css 最尾端新增：優化選單寬度比例 */
+
+/* 左邊選單 (年級)：只佔 2等份 */
+.lb-controls-row select:first-child {
+    flex: 1.5 !important; 
+    min-width: 45px; /* 防止在極小螢幕縮太小 */
+}
+
+/* 右邊選單 (單元)：佔 8等份，讓長標題盡量顯示 */
+.lb-controls-row select:last-child {
+    flex: 8.5 !important;
+}
+
+/* 小選單樣式 */
+.lb-mini-select {
+    flex: 1;              /* 左右各佔一半寬度 */
+    background-color: rgba(0, 0, 0, 0.3);
+    color: #fff;
+    border: 1px solid #444;
+    border-radius: 5px;
+    padding: 5px 2px;     /* 稍微縮小內距以防字太長 */
+    font-size: 0.85rem;
+    outline: none;
+    text-overflow: ellipsis; /* 字太長顯示點點點 */
+}
+
+.lb-mini-select:focus {
+    border-color: #00d2ff;
+    background-color: rgba(0, 0, 0, 0.8);
+}

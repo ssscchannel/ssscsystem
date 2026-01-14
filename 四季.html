@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>晟自然輔助系統　太陽與四季</title>
+    <style>
+        :root {
+            --sky-gradient: linear-gradient(to bottom, #2980b9 0%, #6dd5fa 100%);
+            --ground-color: #555;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            background-color: #f0f2f5;
+            
+            display: flex; flex-direction: column; align-items: center;
+            /* 修改：減少上下邊距，盡量讓內容塞進一頁 */
+            margin: 0; padding: 5px; 
+            height: 100vh;       /* 舊手機相容 */
+            height: 100dvh;      /* 關鍵：扣除工具列後的實際高度 */
+            overflow: hidden;    /* 禁止產生任何捲軸 */
+            touch-action: manipulation;
+        }
+
+        /* --- 標題區 (手機版緊湊化) --- */
+        .header-container {
+            flex-shrink: 0; /* 禁止被壓縮 */
+            width: 97%;     /* 稍微留邊 */
+			box-sizing: border-box; /* 確保 padding 不會讓它變更寬 */
+            max-width: 800px;
+            
+            /* 讓標題在左，按鈕在右 */
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            
+            /* 視覺美化 */
+            padding: 8px 15px;
+            margin-top: 5px;
+			margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.9); /* 90% 不透明度 */
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 立體陰影 */
+            z-index: 1000;
+        }
+		
+        .title-logo {
+            height: 36px; /* 限制高度，避免撐開 */
+            width: auto;
+            border-radius: 4px;
+        }
+        .header-container h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #333;
+            line-height: 1.3;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px; /* Logo 與文字間距 */
+        }
+		
+		/* =========================================
+           3. 右上角按鈕群 (新功能)
+           ========================================= */
+        .nav-buttons {
+            display: flex;
+            gap: 8px; /* 按鈕之間的間距 */
+        }
+		
+		/* 精緻化的 LINE 按鈕 (膠囊狀) */
+        .header-btn {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            background: #06c755; /* LINE 的官方綠色 */
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 20px; /* 圓角膠囊 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+            white-space: nowrap; /* 禁止文字換行 */
+        }
+		
+		.header-btn:active {
+            transform: scale(0.95);
+        }
+
+        .header-btn span {
+            margin-right: 4px; /* 圖示與文字距離 */
+        }
+
+        /* --- 新增：外部連結按鈕 (移植自 index.html) --- */
+        .external-link-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px; 
+            text-decoration: none;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: #fff;
+            
+            /* 樣式保持一致 */
+            padding: 6px 18px; 
+            font-size: 0.9rem; 
+            
+            border-radius: 50px;
+            font-weight: bold;
+            /* 微調：針對此檔案較緊湊的佈局，將原 margin-bottom: 20px 微調為 10px */
+            margin-bottom: 10px;
+            box-shadow: 0 3px 8px rgba(52, 152, 219, 0.4);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            border: 2px solid rgba(255,255,255,0.2);
+        }
+        .external-link-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 12px rgba(52, 152, 219, 0.6);
+            background: linear-gradient(135deg, #2980b9 0%, #2c3e50 100%);
+        }
+        .external-link-btn:active {
+            transform: scale(0.98);
+        }
+
+        /* --- 主模擬視窗 --- */
+        #simWrapper {
+            position: relative;
+            width: 600px; 
+            height: 420px;
+            margin-bottom: 0;
+            /* 修改：這裡保留 margin auto 負責將 wrapper 本身置中 */
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .simulation-container {
+            position: absolute; top: 0; left: 0;
+            width: 600px; height: 420px;
+            background: var(--sky-gradient);
+            border-radius: 20px 20px 0 0;
+            box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+            overflow: hidden; 
+            display: flex; justify-content: center; align-items: flex-end;
+            z-index: 1;
+            
+            /* ★★★ 修復關鍵：設定縮放基準點為左上角 ★★★ */
+            /* 這樣縮放後的內容會緊貼 wrapper 的左上角，配合 wrapper 的 margin:auto 實現完美置中 */
+            transform-origin: top left;
+        }
+
+        /* --- 右上角公轉軌跡圖 --- */
+        .orbit-visual {
+            position: absolute;
+            top: 15px; right: 15px;
+            width: 180px; height: 90px;
+            z-index: 50;
+            pointer-events: none; 
+            transform-origin: top right;
+        }
+        
+        .orbit-path {
+            position: absolute; top: 50%; left: 50%;
+            width: 160px; height: 50px;
+            border: 1px dashed rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .mini-sun {
+            position: absolute; top: 50%; left: 50%; 
+            width: 20px; height: 20px;
+            background: radial-gradient(circle, #fff 20%, #f1c40f 100%);
+            border-radius: 50%;
+            box-shadow: 0 0 10px #f1c40f;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+        }
+
+        .mini-earth-container {
+            position: absolute; width: 16px; height: 16px;
+            transform: translate(-50%, -50%);
+            z-index: 3;
+            display: flex; justify-content: center; align-items: center;
+        }
+
+        .earth-body {
+            position: absolute; width: 12px; height: 12px;
+            background: linear-gradient(90deg, #3498db 50%, #2c3e50 50%);
+            border-radius: 50%; border: 1px solid white; box-sizing: border-box;
+        }
+
+        .earth-axis {
+            position: absolute; width: 1px; height: 20px;
+            background-color: #fff; transform: rotate(23.5deg);
+            z-index: 4; box-shadow: 0 0 2px black;
+        }
+
+        .orbit-label {
+            position: absolute; font-size: 11px; color: rgba(255,255,255,0.9);
+            text-shadow: 1px 1px 2px black; font-weight: bold;
+        }
+
+        /* 地面 */
+        .ground {
+            position: absolute; bottom: 0; width: 100%; height: 35px;
+            background: var(--ground-color);
+            z-index: 10;
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 30px; box-sizing: border-box;
+            border-top: 2px solid #444;
+        }
+        .dir-label {
+            font-size: 1.4rem; font-weight: 900; color: white;
+            text-shadow: 1px 1px 0px #333; font-family: 'Arial Black', sans-serif; z-index: 12;
+        }
+
+        /* --- 天球結構 --- */
+        .celestial-dome {
+            position: absolute; bottom: 35px; left: 50%;
+            width: 500px; height: 250px;
+            border: 2px dashed rgba(255,255,255,0.4);
+            border-bottom: none; border-radius: 250px 250px 0 0;
+            transform: translateX(-50%); pointer-events: none;
+        }
+        
+        .zenith-label {
+            position: absolute; top: -25px; left: 50%; transform: translateX(-50%);
+            color: white; font-weight: bold; font-size: 14px; text-shadow: 1px 1px 2px black;
+        }
+        .zenith-point {
+            position: absolute; top: 0; left: 50%;
+            width: 12px; height: 12px; background: white; border-radius: 50%;
+            transform: translate(-50%, -50%); z-index: 5; border: 2px solid #333;
+        }
+
+        /* 竿子與太陽 */
+        .pole-visual {
+            position: absolute; bottom: 35px; left: 50%;
+            width: 6px; height: 90px; background: #8e44ad; 
+            border: 1px solid #5e3370; border-radius: 3px 3px 0 0;
+            transform: translateX(-50%); z-index: 20; box-shadow: 1px 0 5px rgba(0,0,0,0.3);
+        }
+
+        .sun {
+            position: absolute; width: 36px; height: 36px;
+            background: radial-gradient(circle, #fff700 30%, #f1c40f 100%);
+            border-radius: 50%; box-shadow: 0 0 25px #fff700;
+            transform: translate(-50%, 50%); z-index: 30;
+            transition: bottom 0.2s ease, left 0.2s ease;
+        }
+
+        .horizon-sun {
+            position: absolute; top: 50%; left: 50%; 
+            width: 20px; height: 20px; background: #f39c12; 
+            border: 2px solid #fff; border-radius: 50%;
+            transform: translate(-50%, -50%); z-index: 15;
+            transition: left 0.3s ease; box-shadow: 0 0 5px #f39c12;
+        }
+        .horizon-sun-label {
+            position: absolute; top: 50%; left: 24px; 
+            transform: translateY(-50%); font-size: 11px; color: white; 
+            white-space: nowrap; font-weight: bold; text-shadow: 1px 1px 2px black;
+        }
+
+        /* 參考點 */
+        .ref-point {
+            position: absolute; width: 12px; height: 12px;
+            background: white; border-radius: 50%;
+            transform: translate(-50%, 50%); z-index: 5; border: 2px solid #333;
+        }
+        .ref-label {
+            position: absolute; font-size: 14px; color: #fff;
+            text-shadow: 1px 1px 2px black; font-weight: bold;
+            transform: translate(-50%, -25px); white-space: nowrap;
+        }
+        
+        .polaris {
+            position: absolute; font-size: 32px; color: #f1c40f;
+            text-shadow: 0 0 10px #f39c12; z-index: 15;
+            transition: bottom 0.3s ease, left 0.3s ease;
+            transform: translate(-50%, 50%);
+        }
+        .polaris-label {
+            position: absolute; font-size: 14px; color: #f1c40f; font-weight: bold;
+            white-space: nowrap; transform: translate(20px, -20px); text-shadow: 1px 1px 2px black;
+        }
+
+        .shadow {
+            position: absolute; bottom: 35px; left: 50%; height: 6px; 
+            background: rgba(0, 0, 0, 0.7); transform-origin: left center;
+            z-index: 15; transition: width 0.1s, transform 0.1s; border-radius: 3px;
+        }
+
+        /* --- 資訊面板 (手機版優化) --- */
+        .info-card {
+            width: 100%; max-width: 600px;
+            background: white; padding: 10px 15px; /* 修改：減少內邊距 */
+            box-sizing: border-box;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            border-left: 8px solid #f39c12;
+            display: flex; flex-direction: column; gap: 2px; /* 修改：減少行距 */
+        }
+        .info-header {
+            display: flex; justify-content: space-between; align-items: baseline;
+            border-bottom: 2px solid #eee; padding-bottom: 4px; margin-bottom: 4px;
+        }
+        .season-tag { font-size: 1.3rem; font-weight: 900; color: #e67e22; }
+        .date-tag {
+            font-size: 1rem; font-weight: bold; color: #2c3e50;
+            background: #eee; padding: 2px 8px; border-radius: 5px;
+        }
+        
+        .info-row { 
+            font-size: 0.9rem; /* 手機版字體縮小 */
+            color: #444; 
+            display: flex; align-items: center; 
+            min-height: 24px; 
+            overflow: visible; 
+            flex-wrap: wrap; 
+        }
+        
+        .highlight { color: #c0392b; font-weight: bold; }
+        .blue-highlight { color: #2980b9; font-weight: bold; }
+        
+        .direct-sun-highlight {
+            color: #d35400; font-weight: 900; font-size: 1.0rem;
+            background: #fadbd8; padding: 0px 4px; border-radius: 4px;
+            line-height: 1.2; display: inline-block;
+        }
+        
+        .polar-day { color: #d35400; font-weight: 900; }
+        .polar-night { color: #2c3e50; font-weight: 900; }
+        
+        #polarInfo {
+            border-top: 1px dashed #ddd; margin-top: 4px; padding-top: 4px;
+            visibility: hidden; 
+        }
+        #polarInfo.visible { visibility: visible; }
+
+        /* --- 控制區 --- */
+        .controls { 
+            width: 100%; max-width: 600px;
+            margin-top: 0; margin-bottom: 10px; /* 減少底部空間 */
+            background: #f9f9f9; padding: 10px; /* 減少內距 */
+            border-radius: 0 0 20px 20px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            box-sizing: border-box; border-top: 1px solid #ddd;
+        }
+        .control-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+        label { font-weight: bold; color: #555; min-width: 40px; font-size: 0.9rem;}
+        input[type=range] { flex-grow: 1; cursor: pointer; height: 25px;}
+        
+        .play-btn {
+            background: #27ae60; color: white; border: none;
+            width: 30px; height: 30px; border-radius: 50%;
+            font-size: 1rem; cursor: pointer; display: flex;
+            align-items: center; justify-content: center;
+            margin-left: 5px; transition: 0.2s; box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            flex-shrink: 0;
+        }
+        .play-btn:hover { background: #2ecc71; transform: scale(1.05); }
+        .play-btn.playing { background: #e74c3c; animation: pulse 1.5s infinite;}
+        
+        .btn-group { display: flex; gap: 5px; width: 100%; flex-wrap: wrap; justify-content: space-between; }
+        .btn {
+            flex: 1 1 18%; 
+            padding: 8px 2px; border: none; border-radius: 6px;
+            background: #fff; border: 2px solid #ddd;
+            color: #555; font-weight: bold; cursor: pointer; font-size: 0.85rem;
+            transition: 0.2s; text-align: center; min-width: 45px;
+        }
+        .btn:hover { background: #eee; border-color: #bbb; }
+        .btn.active { background: #3498db; color: white; border-color: #2980b9; }
+
+        select { padding: 6px; border-radius: 6px; border: 1px solid #ccc; flex-grow: 1; font-size: 0.9rem; cursor: pointer;}
+        select.btn-style {
+            background-color: #fff; color: #555; font-weight: bold; border: 2px solid #ddd;
+            min-width: 100%; 
+            flex-basis: 100%;
+            margin-top: 5px;
+        }
+		
+		/* RWD: 手機直式時，標題過長自動換行 */
+        .mobile-break { display: none; }
+        
+        @media (max-width: 600px) {
+            .mobile-break { display: block; height: 0; }
+            .header-container h1 { font-size: 1rem; }
+            .header-btn { padding: 5px 10px; font-size: 0.85rem; }
+            .header-btn span { display: none; } /* 手機版太窄時，隱藏手指圖示 */
+        }
+
+    </style>
+</head>
+<body>
+    
+	<div class="header-container">
+        <h1>
+            <img src="logo.jpg" alt="Logo" class="title-logo" onerror="this.style.display='none'">
+            <div>
+                晟自然輔助系統　<span class="mobile-break"></span>四季與太陽
+            </div>
+        </h1>
+
+        <div class="nav-buttons">
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="header-btn" title="加入官方LINE">
+                <span>👉</span>加 LINE 提問
+            </a>
+            
+            </div>
+    </div>
+
+    <div id="simWrapper">
+        <div class="simulation-container" id="simContainer">
+            
+            <div class="orbit-visual">
+                <div class="orbit-path"></div>
+                <div class="mini-sun" style="left: 55%;"></div> 
+                <div class="mini-earth-container" id="miniEarth">
+                    <div class="earth-axis"></div>
+                    <div class="earth-body" id="earthBody"></div>
+                </div>
+                <div class="orbit-label" style="top: 38px; left: 0px;">夏至</div>
+                <div class="orbit-label" style="top: 38px; right: 0px; text-align:right;">冬至</div>
+                <div class="orbit-label" style="bottom: 0px; left: 50%; transform:translateX(-50%);">秋分</div>
+                <div class="orbit-label" style="top: 0px; left: 50%; transform:translateX(-50%);">春分</div>
+            </div>
+
+            <div class="celestial-dome">
+                <div class="zenith-point"></div>
+                <div class="zenith-label">天頂</div>
+                <div class="polaris" id="polaris">★<div class="polaris-label">北極星</div></div>
+                <div class="ref-point" id="refSummer"><div class="ref-label">夏至</div></div>
+                <div class="ref-point" id="refEquinox"><div class="ref-label">春秋分</div></div>
+                <div class="ref-point" id="refWinter"><div class="ref-label">冬至</div></div>
+            </div>
+
+            <div class="sun" id="sun"></div>
+            <div class="pole-visual"></div>
+            <div class="shadow" id="shadow"></div>
+
+            <div class="ground">
+                <span class="dir-label">S</span>
+                <div class="horizon-sun" id="horizonSun"><div class="horizon-sun-label">日出日沒</div></div>
+                <span class="dir-label">N</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-card">
+        <div class="info-header">
+            <span class="season-tag" id="seasonText">春分</span>
+            <span class="date-tag" id="dateText">3/21</span>
+        </div>
+        
+        <div class="info-row">
+            📍 日出方位：<span class="blue-highlight" id="sunriseDir">正東方</span> ／ 日落：<span class="blue-highlight" id="sunsetDir">正西方</span>
+        </div>
+        
+        <div class="info-row">
+            📐 太陽仰角：<span class="highlight" id="sunAltitude">00.0°</span>
+            <span style="margin-left: 15px;">
+                ☀️ 正午位置：<span class="highlight" id="zenithPosText">天頂</span>
+            </span>
+        </div>
+
+        <div class="info-row">
+            🌗 晝夜長短：<span class="highlight" id="dayNightText">晝夜等長</span>
+        </div>
+        
+        <div class="info-row" id="shadowInfo">
+            📏 正午竿影：朝北
+        </div>
+        
+        <div class="info-row" id="directHitInfo">
+            🔥 太陽直射累積：<span class="highlight" id="hitCount">0</span> 次&nbsp;<span id="hitTotal">(本地一年總計 0 次)</span>
+        </div>
+
+        <div class="info-row" id="polarInfo">
+            🌍 極圈狀況：
+        </div>
+    </div>
+
+    <div class="controls">
+        <div class="control-row">
+            <label>地點</label>
+            <select id="locationSelect" onchange="updateSim()">
+                <option value="23.48" selected>嘉義 (23.5°N - 北回歸線)</option>
+                <option value="25.03">台北 (25.0°N)</option>
+                <option value="22.62">高雄 (22.6°N)</option>
+            </select>
+        </div>
+
+        <div class="control-row">
+            <label>日期</label>
+            <input type="range" id="dateSlider" min="0" max="364" value="80" oninput="updateSim()">
+            <button id="playBtn" class="play-btn" onclick="togglePlay()" title="自動播放一年">▶</button>
+        </div>
+
+        <div class="btn-group">
+            <button class="btn" id="btnSpring" onclick="setDay(80)">春分</button>
+            <button class="btn" id="btnSummer" onclick="setDay(172)">夏至</button>
+            <button class="btn" id="btnAutumn" onclick="setDay(264)">秋分</button>
+            <button class="btn" id="btnWinter" onclick="setDay(355)">冬至</button>
+            
+            <select id="holidaySelect" class="btn btn-style" onchange="applyHoliday()" style="text-align: center; text-align-last:center;">
+                <option value="" disabled selected>📅 節日</option>
+                <option value="0">1/1 元旦</option>
+                <option value="58">2/28 和平紀念日</option>
+                <option value="93">4/4 兒童節</option>
+                <option value="94">4/5 清明節</option>
+                <option value="120">5/1 勞動節</option>
+                <option value="130">5月第2週 母親節</option>
+                <option value="219">8/8 父親節</option>
+                <option value="270">9/28 教師節</option>
+                <option value="282">10/10 國慶日</option>
+                <option value="297">10/25 光復節</option>
+                <option value="358">12/25 行憲紀念日</option>
+            </select>
+        </div>
+    </div>
+
+    <script>
+        const R = 250; 
+        const GROUND_Y = 35;
+        // 若螢幕小，動態調整竿子高度計算基數
+        let POLE_HEIGHT = 90; 
+        const ORBIT_W = 80; 
+        const ORBIT_H = 25; 
+        
+        let playInterval = null;
+        
+        // ★★★ RWD 智慧縮放邏輯 (修正版：解決歪斜) ★★★
+        function resizeSimulation() {
+            const wrapper = document.getElementById('simWrapper');
+            const simContainer = document.getElementById('simContainer');
+            // 使用 window.innerWidth 確保獲取正確的視窗寬度，減去邊距
+            const availableWidth = Math.min(window.innerWidth, document.body.clientWidth) - 20; 
+            
+            // 手機版調整竿子高度參數，避免影子過長
+            if (window.innerWidth < 620) {
+                POLE_HEIGHT = 80; // 對應 CSS 的 .pole-visual 高度
+            } else {
+                POLE_HEIGHT = 90;
+            }
+
+            // 原始寬度 600
+            if (availableWidth < 600) {
+                const scale = availableWidth / 600;
+                // 使用 transform 進行縮放
+                simContainer.style.transform = `scale(${scale})`;
+                
+                // ★ 關鍵：強制修改 wrapper 的高度與寬度，並確保置中
+                wrapper.style.width = `${600 * scale}px`;
+                wrapper.style.height = `${420 * scale}px`;
+                
+            } else {
+                simContainer.style.transform = 'none';
+                wrapper.style.width = '600px';
+                wrapper.style.height = '420px';
+            }
+            // 每次縮放後重繪影子，確保比例正確
+            updateSim(true);
+        }
+        window.addEventListener('resize', resizeSimulation);
+        
+        function setDay(val) {
+            document.getElementById('dateSlider').value = val;
+            updateSim();
+            stopPlay(); 
+        }
+
+        function applyHoliday() {
+            const select = document.getElementById('holidaySelect');
+            const val = select.value;
+            if(val) {
+                document.getElementById('dateSlider').value = val;
+                updateSim();
+                stopPlay();
+            }
+        }
+
+        function stopPlay() {
+            if (playInterval) {
+                clearInterval(playInterval);
+                playInterval = null;
+                const btn = document.getElementById('playBtn');
+                btn.innerText = "▶";
+                btn.classList.remove('playing');
+            }
+        }
+
+        function togglePlay() {
+            const btn = document.getElementById('playBtn');
+            if (playInterval) {
+                stopPlay();
+            } else {
+                btn.innerText = "⏸";
+                btn.classList.add('playing');
+                playInterval = setInterval(() => {
+                    let slider = document.getElementById('dateSlider');
+                    let val = parseInt(slider.value);
+                    val++;
+                    if (val > 364) val = 0; 
+                    slider.value = val;
+                    updateSim(true);
+                }, 33); // ★★★ 修改：改為33ms，約等於12秒跑完一年 (33ms * 365 ≈ 12.045s) ★★★
+            }
+        }
+
+        document.addEventListener('keydown', function(event) {
+            if (playInterval) stopPlay();
+        });
+
+        document.addEventListener('mousedown', function(event) {
+            if (playInterval && event.target.id !== 'playBtn') {
+                stopPlay();
+            }
+        });
+
+        function updateSim(isAuto = false) {
+            if (!isAuto && playInterval) stopPlay();
+
+            const dayOfYear = parseInt(document.getElementById('dateSlider').value);
+            const lat = parseFloat(document.getElementById('locationSelect').value);
+            
+            document.querySelectorAll('button.btn').forEach(b => b.classList.remove('active'));
+            // 寬鬆判定節氣 (±1天)
+            const isSpring = Math.abs(dayOfYear - 80) < 2;
+            const isSummer = Math.abs(dayOfYear - 172) < 2;
+            const isAutumn = Math.abs(dayOfYear - 264) < 2;
+            const isWinter = Math.abs(dayOfYear - 355) < 2;
+
+            if(isSpring) document.getElementById('btnSpring').classList.add('active');
+            if(isSummer) document.getElementById('btnSummer').classList.add('active');
+            if(isAutumn) document.getElementById('btnAutumn').classList.add('active');
+            if(isWinter) document.getElementById('btnWinter').classList.add('active');
+            
+            const holidaySelect = document.getElementById('holidaySelect');
+            const holidayDays = [0, 58, 93, 94, 120, 130, 219, 270, 282, 297, 358];
+            if(!holidayDays.includes(dayOfYear)) holidaySelect.value = "";
+
+            // 1. 天文計算
+            const angle = ((dayOfYear - 80) / 365) * 2 * Math.PI;
+            const declination = 23.5 * Math.sin(angle);
+
+            // 正午仰角
+            let altitude = 90 - Math.abs(lat - declination);
+            let latDiff = Math.abs(lat - declination);
+            const isSunNorth = (declination > lat);
+            
+            // 2. 太陽視覺位置
+            const radAlt = altitude * (Math.PI / 180);
+            let xPos = R * Math.cos(radAlt); 
+            if (!isSunNorth) xPos = -xPos; 
+            const yPos = R * Math.sin(radAlt); 
+            const sun = document.getElementById('sun');
+            sun.style.left = `calc(50% + ${xPos}px)`;
+            sun.style.bottom = `${GROUND_Y + yPos}px`; 
+
+            // 3. 參考點與北極星
+            updateRefPoint('refEquinox', lat, 0);       
+            updateRefPoint('refSummer', lat, 23.5);     
+            updateRefPoint('refWinter', lat, -23.5);    
+
+            const polaris = document.getElementById('polaris');
+            const radLat = lat * (Math.PI / 180);
+            polaris.style.left = `calc(50% + ${R * Math.cos(radLat)}px)`;
+            polaris.style.bottom = `${GROUND_Y + R * Math.sin(radLat)}px`;
+
+            // 4. 影子模擬
+            let tanVal = Math.tan(radAlt);
+            if(tanVal > 100) tanVal = 100;
+            if(tanVal < 0.01) tanVal = 0.01;
+            
+            let shadowVisualLen = POLE_HEIGHT / tanVal; 
+            if (shadowVisualLen > 280) shadowVisualLen = 280; 
+            if (altitude < 89.5 && shadowVisualLen < 8) shadowVisualLen = 8;
+            
+            const shadow = document.getElementById('shadow');
+            shadow.style.width = `${shadowVisualLen}px`; 
+            if (!isSunNorth) shadow.style.transform = "rotate(0deg)"; 
+            else shadow.style.transform = "rotate(180deg)"; 
+
+            // 5. 日出日落方位
+            const horizonSun = document.getElementById('horizonSun');
+            let offsetPx = (declination / 23.5) * 80; 
+            horizonSun.style.left = `calc(50% + ${offsetPx}px)`;
+            
+            // 6. 小地球公轉
+            let orbitAngle = ((dayOfYear + 10) / 365) * 2 * Math.PI; 
+            let earthX = ORBIT_W * Math.cos(orbitAngle);
+            let earthY = -ORBIT_H * Math.sin(orbitAngle); 
+            
+            const miniEarth = document.getElementById('miniEarth');
+            const earthBody = document.getElementById('earthBody');
+
+            miniEarth.style.left = `calc(50% + ${earthX}px)`;
+            miniEarth.style.top = `calc(50% + ${earthY}px)`;
+            
+            earthBody.style.transform = `rotate(${-orbitAngle}rad)`;
+
+            // 7. 文字更新
+            updateTextInfo(dayOfYear, declination, isSunNorth, altitude, latDiff, lat, {isSpring, isSummer, isAutumn, isWinter});
+        }
+
+        function updateRefPoint(id, lat, dec) {
+            let alt = 90 - Math.abs(lat - dec);
+            let isNorth = (dec > lat);
+            let rad = alt * (Math.PI / 180);
+            let x = R * Math.cos(rad);
+            if (!isNorth) x = -x;
+            let y = R * Math.sin(rad);
+            const el = document.getElementById(id);
+            el.style.left = `calc(50% + ${x}px)`;
+            el.style.bottom = `${GROUND_Y + y}px`; 
+        }
+
+        function updateTextInfo(day, dec, isSunNorth, alt, latDiff, lat, seasons) {
+            const { isSpring, isSummer, isAutumn, isWinter } = seasons;
+
+            // 季節
+            let season = "";
+            if (isSpring) season = "春分";
+            else if (isSummer) season = "夏至";
+            else if (isAutumn) season = "秋分";
+            else if (isWinter) season = "冬至";
+            else {
+                if (day > 80 && day < 172) season = "春分 ➝ 夏至";
+                else if (day > 172 && day < 264) season = "夏至 ➝ 秋分";
+                else if (day > 264 && day < 355) season = "秋分 ➝ 冬至";
+                else season = "冬至 ➝ 春分"; 
+            }
+            document.getElementById('seasonText').innerText = season;
+
+            // 日期
+            let dateStr = "";
+            if (isSpring) dateStr = "3/21";
+            else if (isSummer) dateStr = "6/22";
+            else if (isAutumn) dateStr = "9/23";
+            else if (isWinter) dateStr = "12/22";
+            else {
+                const d = new Date(2023, 0, 1);
+                d.setDate(d.getDate() + day);
+                dateStr = `${d.getMonth()+1}/${d.getDate()}`;
+            }
+            document.getElementById('dateText').innerText = dateStr;
+
+            // 日出日落
+            let riseStr = "正東方";
+            let setStr = "正西方";
+            if (isSpring || isAutumn) {
+                riseStr = "正東方";
+                setStr = "正西方";
+            } else if (dec > 0) { 
+                riseStr = "東偏北 ↗";
+                setStr = "西偏北 ↘";
+            } else { 
+                riseStr = "東偏南 ↘";
+                setStr = "西偏南 ↙";
+            }
+            document.getElementById('sunriseDir').innerText = riseStr;
+            document.getElementById('sunsetDir').innerText = setStr;
+
+            // 仰角
+            let displayAlt = alt;
+            let displayDiff = latDiff;
+            if(isSpring || isAutumn) {
+                displayAlt = 90 - lat;
+                displayDiff = lat;
+            }
+            document.getElementById('sunAltitude').innerText = `${displayAlt.toFixed(1)}°`;
+
+            // 正午太陽位置描述
+            let zenithText = "";
+            let diff = lat - dec; 
+            let absDiff = Math.abs(diff);
+
+            if (isSpring || isAutumn) {
+                diff = lat; 
+                absDiff = lat;
+            }
+            
+            if (absDiff < 0.1) {
+                zenithText = "直射 (天頂)";
+            } else if (diff > 0) {
+                zenithText = `天頂偏南 ${absDiff.toFixed(1)}°`; // ★修復：加回度數
+            } else {
+                zenithText = `天頂偏北 ${absDiff.toFixed(1)}°`; // ★修復：加回度數
+            }
+            document.getElementById('zenithPosText').innerText = zenithText;
+
+
+            // 晝夜
+            let dayNight = "";
+            let trend = "";
+            if (day >= 355 || day < 172) trend = "(之後晝漸長,夜漸短)";
+            else trend = "(之後晝漸短,夜漸長)";
+            
+            if (isSpring || isAutumn) dayNight = "晝夜等長 " + trend;
+            else if (isSummer) dayNight = "晝最長、夜最短 " + trend;
+            else if (isWinter) dayNight = "晝最短、夜最長 " + trend;
+            else if (dec > 0) dayNight = "晝長夜短 " + trend;
+            else dayNight = "晝短夜長 " + trend;
+            document.getElementById('dayNightText').innerText = dayNight;
+
+            // ★★★ 竿影描述優化 (只在四節氣顯示括號說明) ★★★
+            let shadowDir = isSunNorth ? "朝南" : "朝北";
+            let shadowDesc = "";
+            let rad = displayAlt * (Math.PI / 180);
+            let tanVal = Math.tan(rad);
+            let ratio = 1 / tanVal; 
+            let isDirect = false;
+
+            if (displayAlt > 89.5) {
+                shadowDir = "消失"; 
+                shadowDesc = "直射"; 
+                isDirect = true;
+            } else if (isSpring || isSummer || isAutumn || isWinter) {
+                // 只有特定節氣才計算並顯示長度描述
+                if (ratio < 0.1) {
+                    shadowDesc = "極短";
+                } else if (ratio < 0.6) {
+                    shadowDesc = "約竿長的一半"; 
+                } else if (ratio < 0.9) { 
+                    shadowDesc = "小於竿長"; 
+                } else if (ratio >= 0.9 && ratio <= 1.1) {
+                    shadowDesc = "約與竿長相等"; 
+                } else {
+                    shadowDesc = "大於竿長";
+                }
+            }
+            
+            let shadowHtml = "";
+            if (isDirect) {
+                shadowHtml = `📏 正午竿影：<span class="direct-sun-highlight">直射 (無影)</span>`;
+            } else {
+                // 如果有描述（即節氣當天），才顯示括號
+                let descSpan = shadowDesc ? `&nbsp; <span style="font-weight:normal">(${shadowDesc})</span>` : "";
+                
+                shadowHtml = `📏 正午竿影：<span class="highlight">${shadowDir}</span>${descSpan}`;
+                
+                if (isSummer && isSunNorth) {
+                     shadowHtml += ` <span style='font-size:0.9rem; color:#d35400;'> (太陽偏北)</span>`;
+                }
+            }
+            document.getElementById('shadowInfo').innerHTML = shadowHtml;
+
+            // 直射次數
+            let totalHits = 0;
+            let currentHits = 0;
+            
+            if (lat > 24) { 
+                totalHits = 0;
+                currentHits = 0;
+            } else if (lat > 23) { 
+                totalHits = 1;
+                if (day >= 172) currentHits = 1; 
+            } else { 
+                totalHits = 2;
+                if (day >= 156) currentHits++;
+                if (day >= 188) currentHits++;
+            }
+            
+            document.getElementById('hitCount').innerText = currentHits;
+            document.getElementById('hitTotal').innerText = `(本地一年總計 ${totalHits} 次)`;
+
+            // 極圈
+            const polarInfo = document.getElementById('polarInfo');
+            if (isSummer) {
+                polarInfo.innerHTML = `🌍 極圈：北極圈 <span class="polar-day">永晝</span> ／ 南極圈 <span class="polar-night">永夜</span>`;
+                polarInfo.classList.add('visible');
+            } else if (isWinter) {
+                polarInfo.innerHTML = `🌍 極圈：北極圈 <span class="polar-night">永夜</span> ／ 南極圈 <span class="polar-day">永晝</span>`;
+                polarInfo.classList.add('visible');
+            } else {
+                polarInfo.classList.remove('visible');
+            }
+        }
+
+        window.onload = function() {
+            updateSim();
+            resizeSimulation(); 
+        };
+    </script>
+</body>
+</html>

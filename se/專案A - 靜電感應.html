@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>晟自然輔助系統　靜電感應</title>
+    
+    <style>
+        /* =========================================
+           1. 全局設定：強制一頁式 (No Scroll)
+           ========================================= */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            /* 雙重保險的高度設定 */
+            height: 100vh;   /* 舊瀏覽器相容 */
+            height: 100dvh;  /* 關鍵：自動扣除手機工具列高度 */
+            overflow: hidden; /* 禁止任何捲動 */
+            
+            /* 彈性佈局：垂直排列 */
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 水平置中 */
+            
+            /* 背景設定 (可依專案替換) */
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-color: #000; /* 圖片載入前的預設底色 */
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+        }
+
+        /* =========================================
+           2. 標準標題區 (Header Container)
+           ========================================= */
+        .header-container {
+            flex-shrink: 0; /* 禁止被壓縮 */
+            
+            /* 寬度與對齊設定 */
+            width: 97%;
+            box-sizing: border-box; /* 確保 padding 不會撐大寬度 */
+            max-width: 800px;       /* 限制最大寬度，避免在電腦上太寬 */
+            
+            /* 內部排版：左右推開 */
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            
+            /* 視覺風格 (統一規範) */
+            padding: 8px 15px;
+            margin-top: 5px;   /* 頂部微留白 */
+            margin-bottom: 8px; /* 與下方模擬區的呼吸距離 */
+            
+            background: rgba(255, 255, 255, 0.9); /* 高清晰度半透明白 */
+            backdrop-filter: blur(5px);           /* 毛玻璃特效 */
+            border-radius: 12px;                  /* 圓滑角 */
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15); /* 立體浮動陰影 */
+            z-index: 1000;
+        }
+
+        /* 標題文字 */
+        .header-container h1 {
+            margin: 0;
+            font-size: 1.1rem; /* 手機最佳閱讀大小 */
+            color: #333;
+            line-height: 1.3;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap; /* 強制單行，不換行 */
+        }
+
+        /* Logo 圖片 */
+        .title-logo {
+            height: 36px; /* 固定高度 */
+            width: auto;
+            border-radius: 4px;
+        }
+
+        /* 精緻化的 LINE 按鈕 (膠囊狀) */
+        .header-btn {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            background: #06c755; /* LINE 的官方綠色 */
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 20px; /* 圓角膠囊 */
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+            white-space: nowrap; /* 禁止文字換行 */
+        }
+		
+		.header-btn:active {
+            transform: scale(0.95);
+        }
+
+        .header-btn span {
+            margin-right: 4px; /* 圖示與文字距離 */
+        }
+
+        /* =========================================
+           3. 中間模擬區 (Main Simulation) - 自動填滿
+           ========================================= */
+        #sim-container {
+            /* 核心關鍵：flex: 1 讓它自動佔據剩餘所有空間 */
+            flex: 1; 
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* 浮動提示標籤 (維持原設計) */
+        .instruction-tag {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            color: #555;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            pointer-events: none; 
+            white-space: nowrap;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .instruction-tag.active {
+            color: #c0392b;
+            border: 2px solid #e74c3c;
+            background: #fff;
+            transform: translateX(-50%) scale(1.05);
+        }
+
+        /* =========================================
+           4. 底部控制區 (Footer Controls) - 左右滿版
+           ========================================= */
+        .controls {
+            flex: 0 0 auto; /* 固定高度，不被壓縮 */
+            width: 100%;
+            box-sizing: border-box;
+            
+            /* 視覺風格 */
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            
+            padding: 10px 15px;
+            /* 避讓 iPhone 底部橫條 (Safe Area) */
+            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            
+            display: flex;
+            justify-content: space-between; /* 關鍵：左右推開 */
+            align-items: center;
+            z-index: 1000;
+        }
+
+        /* 左側容器：放原本的膠囊開關 */
+        .controls-left {
+            display: flex;
+            align-items: center;
+        }
+
+        /* 右側容器：放返回按鈕 */
+        .controls-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* --- 原有按鈕樣式保留 --- */
+        .switch-capsule {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f3f5;
+            border-radius: 100px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+            padding: 5px 15px; 
+            gap: 10px;
+        }
+
+        .btn-toggle {
+            width: 44px; height: 44px;
+            border: none; border-radius: 50%;
+            font-size: 1.5rem; font-weight: 800;
+            cursor: pointer;
+            background: transparent; color: #bdc3c7;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-toggle:active { transform: scale(0.95); }
+        .btn-toggle.active-neg { background: #3498db; color: white; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
+        .btn-toggle.active-pos { background: #e74c3c; color: white; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); }
+        
+        .deck-label { font-size: 0.9rem; font-weight: 700; color: #666; white-space: nowrap; margin-right: 5px; }
+        .divider { width: 1px; height: 24px; background: #cbd5e0; margin: 0 5px; }
+
+        /* --- 新增：右側返回按鈕 --- */
+        .btn-return {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: #fff;
+            color: #555;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
+            font-size: 1.4rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .btn-return:active { transform: scale(0.9); background: #f0f0f0; }
+
+        /* RWD: 手機直式時，標題過長自動換行 */
+        .mobile-break { display: none; }
+        
+        @media (max-width: 600px) {
+            .mobile-break { display: block; height: 0; }
+            .header-container h1 { font-size: 1rem; }
+            .header-btn { padding: 5px 10px; font-size: 0.85rem; }
+            .header-btn span { display: none; } /* 手機版太窄時，隱藏手指圖示 */
+			.instruction-bar {
+    			font-size: 0.8rem; /* 手機字體縮小 */
+				padding: 5px 15px;
+				width: 90%; /* 手機上寬度稍微放寬 */
+				margin-top: 5px; /* 手機版不使用負邊距，避免太擁擠 */
+				margin-bottom: 10px;
+				flex-direction: row; /* 保持水平排列 */
+				flex-wrap: nowrap; /* 盡量不換行，若字太多會自動縮小 */
+				}
+        }
+		
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1>
+            <img src="logo.jpg" alt="Logo" class="title-logo" onerror="this.style.display='none'">
+            <div>
+                晟自然輔助系統　靜電感應
+            </div>
+        </h1>
+        <div class="nav-buttons">
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="header-btn">
+                <span>👉</span>加 LINE 提問
+            </a>       
+        </div>
+    </div>
+
+    <div id="sim-container">
+        <div class="instruction-tag" id="infoTag">拖曳帶電棒靠近導體，觀察電子移動狀況</div>
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="controls-left">
+            <div class="switch-capsule">
+                <span class="deck-label">帶電棒</span>
+                <button class="btn-toggle active-neg" id="btnNeg" onclick="APP.setRod(-1)">－</button>
+                <div class="divider"></div>    
+                <button class="btn-toggle" id="btnPos" onclick="APP.setRod(1)">＋</button>       
+            </div>
+        </div>
+
+        <div class="controls-right">
+            <a href="index.html" class="btn-return" title="返回首頁">↩</a>
+        </div>
+    </div>
+
+    <script>
+        // --- 核心邏輯：取自「專案A - 靜電感應.html」並修正 Resize 適配 ---
+        const APP = {
+            canvas: null,
+            ctx: null,
+            wrapper: null,
+            width: 0,
+            height: 0,
+            dpr: 1,
+
+            // 場景物件 (資料結構維持不變)
+            conductor: { x: 0, y: 0, r: 0 },
+            rod: { x: 0, y: 0, charge: -1, dragging: false, angle: 0 }, 
+            particles: [], 
+            protons: [],   
+
+            CONFIG: {
+                radiusBase: 90,     
+                particleSize: 15,   
+                k_rod: 150000,      
+                k_self: 7000,       
+                k_core: 0,          
+                damping: 0.6,       
+                rodLen: 100,        
+                rodW: 34,           
+                gap: 50,            
+                inductionThreshold: 160
+            },
+
+            state: {
+                inductionLevel: 0 
+            },
+
+            init: function() {
+                this.wrapper = document.getElementById('sim-container');
+                this.canvas = document.getElementById('simCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.dpr = window.devicePixelRatio || 1;
+
+                // 綁定事件
+                const bind = (evts, handler) => evts.forEach(e => this.canvas.addEventListener(e, handler, {passive: false}));
+                bind(['mousedown', 'mousemove', 'mouseup', 'mouseleave'], e => this.handleMouse(e));
+                bind(['touchstart', 'touchmove', 'touchend'], e => this.handleTouch(e));
+                
+                // 監聽視窗變動 (重要：確保翻轉螢幕時畫布會重繪)
+                window.addEventListener('resize', () => this.resize());
+
+                // 初始化尺寸與啟動
+                this.resize();
+                this.loop();
+            },
+
+            // --- 關鍵修正：不再鎖定 500x450，而是讀取 flex 延展後的實際大小 ---
+            resize: function() {
+                // 讀取容器實際像素大小
+                const rect = this.wrapper.getBoundingClientRect();
+                this.width = rect.width;
+                this.height = rect.height;
+
+                // 設定 Canvas 解析度 (Retina 優化)
+                this.canvas.width = this.width * this.dpr;
+                this.canvas.height = this.height * this.dpr;
+                this.ctx.scale(this.dpr, this.dpr);
+
+                // 1. 導體：永遠置中
+                this.conductor.x = this.width / 2;
+                this.conductor.y = this.height / 2;
+                
+                // 2. 縮放比例：根據畫面短邊來決定物件大小 (確保手機上不會太大或太小)
+                // 基準值 450px 是原本設計的高度
+                let scale = Math.min(this.width, this.height) / 450;
+                
+                this.conductor.r = this.CONFIG.radiusBase * scale;
+                this.rodSize = {
+                    L: this.CONFIG.rodLen * scale,
+                    W: this.CONFIG.rodW * scale
+                };
+
+                // 重置粒子 (因為導體位置變了)
+                this.initParticles();
+
+                // 若帶電棒尚未有位置(剛開啟)，給予預設位置
+                if (this.rod.x === 0) {
+                    this.rod.x = this.width * 0.85; 
+                    this.rod.y = this.height * 0.85;
+                }
+            },
+
+            initParticles: function() {
+                this.particles = [];
+                this.protons = [];
+                const {x, y, r} = this.conductor;
+                
+                const offset = r * 0.45;
+                const pos = [
+                    {x: x-offset, y: y-offset}, {x: x+offset, y: y-offset},
+                    {x: x-offset, y: y+offset}, {x: x+offset, y: y+offset}
+                ];
+
+                pos.forEach(p => {
+                    this.protons.push({x: p.x, y: p.y});
+                    this.particles.push({
+                        x: p.x + (Math.random()-0.5)*10,
+                        y: p.y + (Math.random()-0.5)*10,
+                        vx: 0, vy: 0
+                    });
+                });
+            },
+
+            update: function() {
+                let dxRod = this.conductor.x - this.rod.x;
+                let dyRod = this.conductor.y - this.rod.y;
+                this.rod.angle = Math.atan2(dyRod, dxRod); 
+
+                let halfL = this.rodSize.L / 2;
+                let tipX = this.rod.x + Math.cos(this.rod.angle) * halfL;
+                let tipY = this.rod.y + Math.sin(this.rod.angle) * halfL;
+
+                let distToCenter = Math.sqrt(dxRod*dxRod + dyRod*dyRod);
+                let surfaceDist = distToCenter - this.conductor.r - halfL;
+                let maxEffectDist = this.CONFIG.inductionThreshold; // 這裡可考慮乘上 scale，但目前維持原物理參數較穩定
+                
+                if (surfaceDist < 0) surfaceDist = 0;
+                
+                if (surfaceDist > maxEffectDist) {
+                    this.state.inductionLevel = 0;
+                } else {
+                    this.state.inductionLevel = 1 - (surfaceDist / maxEffectDist);
+                }
+
+                const isInducting = this.state.inductionLevel > 0;
+                const infoTag = document.getElementById('infoTag');
+                
+                if (isInducting) {
+                    infoTag.innerText = "⚡ 靜電感應：不接觸 使正,負電荷暫時分離";
+                    infoTag.classList.add('active');
+                } else {
+                    infoTag.innerText = "拖曳帶電棒靠近導體，觀察電子移動狀況";
+                    infoTag.classList.remove('active');
+                }
+
+                const pR = this.CONFIG.particleSize;
+                // 物理力計算也需要依照縮放比例調整，才不會在手機上吸力過強
+                const scale = Math.min(this.width, this.height) / 450;
+
+                this.particles.forEach((p, i) => {
+                    let fx = 0, fy = 0;
+
+                    let dx = p.x - tipX;
+                    let dy = p.y - tipY;
+                    let distSq = dx*dx + dy*dy;
+                    if (distSq < 100) distSq = 100;
+                    let isRepel = (this.rod.charge === -1);
+                    // 修正：依照 scale 調整電力常數
+                    let rodF = (this.CONFIG.k_rod * scale) / distSq;
+                    let dist = Math.sqrt(distSq);
+
+                    if (!isInducting) rodF = 0;
+
+                    if (isRepel) { fx += (dx / dist) * rodF; fy += (dy / dist) * rodF; }
+                    else { fx -= (dx / dist) * rodF; fy -= (dy / dist) * rodF; }
+
+                    this.particles.forEach((other, j) => {
+                        if (i === j) return;
+                        let odx = p.x - other.x;
+                        let ody = p.y - other.y;
+                        let od2 = odx*odx + ody*ody;
+                        let od = Math.sqrt(od2);
+                        if (od < 1) od = 1;
+                        let repF = (this.CONFIG.k_self * scale) / (od2);
+                        fx += (odx / od) * repF;
+                        fy += (ody / od) * repF;
+                    });
+
+                    p.vx = (p.vx + fx) * this.CONFIG.damping;
+                    p.vy = (p.vy + fy) * this.CONFIG.damping;
+                    if (Math.abs(p.vx) < 0.1) p.vx = 0;
+                    if (Math.abs(p.vy) < 0.1) p.vy = 0;
+                    let nextX = p.x + p.vx;
+                    let nextY = p.y + p.vy;
+
+                    let cdx = nextX - this.conductor.x;
+                    let cdy = nextY - this.conductor.y;
+                    let cDist = Math.sqrt(cdx*cdx + cdy*cdy);
+                    let limitR = this.conductor.r - pR - 2;
+
+                    if (cDist > limitR) {
+                        let ang = Math.atan2(cdy, cdx);
+                        p.x = this.conductor.x + limitR * Math.cos(ang);
+                        p.y = this.conductor.y + limitR * Math.sin(ang);
+                        p.vx = 0; p.vy = 0;
+                    } else {
+                        p.x = nextX; p.y = nextY;
+                    }
+
+                    this.particles.forEach((other, j) => {
+                        if (i === j) return;
+                        let dX = p.x - other.x;
+                        let dY = p.y - other.y;
+                        let d = Math.sqrt(dX*dX + dY*dY);
+                        let minD = pR * 2 + 1;
+                        if (d < minD && d > 0) {
+                            let push = (minD - d) * 0.5;
+                            p.x += (dX/d) * push;
+                            p.y += (dY/d) * push;
+                        }
+                    });
+                });
+            },
+
+            draw: function() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.drawConductor(); 
+                this.protons.forEach(p => this.drawCharge(p.x, p.y, '#e74c3c', '+'));
+                this.particles.forEach(p => this.drawCharge(p.x, p.y, '#3498db', '-'));
+                this.drawRod();
+            },
+
+            drawConductor: function() {
+                const {x, y, r} = this.conductor;
+                this.ctx.fillStyle = '#95a5a6';
+                this.ctx.fillRect(x - 8, y + r - 2, 16, this.height); // 支架向下延伸到底
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, r, 0, Math.PI*2);
+                let grad = this.ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.1, x, y, r);
+                grad.addColorStop(0, '#f8f9fa');
+                grad.addColorStop(1, '#95a5a6');
+                this.ctx.fillStyle = grad;
+                this.ctx.fill();
+
+                if (this.state.inductionLevel > 0) {
+                    let opacity = this.state.inductionLevel * 0.3; 
+                    let angleToRod = Math.atan2(this.rod.y - y, this.rod.x - x);
+                    
+                    const colorPos = `rgba(231, 76, 60, ${opacity})`; 
+                    const colorNeg = `rgba(52, 152, 219, ${opacity})`; 
+                    let nearColor = (this.rod.charge < 0) ? colorPos : colorNeg;
+                    let farColor = (this.rod.charge < 0) ? colorNeg : colorPos;
+                    
+                    this.ctx.save();
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, r, angleToRod - Math.PI/2, angleToRod + Math.PI/2);
+                    this.ctx.fillStyle = nearColor;
+                    this.ctx.fill();
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, r, angleToRod + Math.PI/2, angleToRod + Math.PI*1.5);
+                    this.ctx.fillStyle = farColor;
+                    this.ctx.fill();
+                    this.ctx.restore();
+
+                    if (this.state.inductionLevel > 0.1) {
+                        this.ctx.save();
+                        const txtColorPos = '#c0392b';
+                        const txtColorNeg = '#2980b9';
+                        let nearTxtColor = (this.rod.charge < 0) ? txtColorPos : txtColorNeg;
+                        let farTxtColor = (this.rod.charge < 0) ? txtColorNeg : txtColorPos;
+
+                        let nearText = (this.rod.charge < 0) ? "異性電(+)" : "異性電(-)";
+                        let farText = (this.rod.charge < 0) ? "同性電(-)" : "同性電(+)";
+
+                        let labelDist = r + 35; 
+                        let offsetAngle = Math.PI / 6; 
+
+                        let nx = x + Math.cos(angleToRod - offsetAngle) * labelDist;
+                        let ny = y + Math.sin(angleToRod - offsetAngle) * labelDist;
+                        let fx = x + Math.cos(angleToRod + Math.PI - offsetAngle) * labelDist;
+                        let fy = y + Math.sin(angleToRod + Math.PI - offsetAngle) * labelDist;
+
+                        this.ctx.globalAlpha = Math.min(1, this.state.inductionLevel * 2);
+                        this.ctx.font = `bold 15px "Microsoft JhengHei", Arial`;
+                        this.ctx.textAlign = 'center';
+                        this.ctx.textBaseline = 'middle';
+                        this.ctx.shadowColor = "rgba(255, 255, 255, 0.8)";
+                        this.ctx.shadowBlur = 4;
+
+                        this.ctx.fillStyle = nearTxtColor;
+                        this.ctx.fillText(nearText, nx, ny);
+                        
+                        this.ctx.fillStyle = farTxtColor;
+                        this.ctx.fillText(farText, fx, fy);
+                        this.ctx.restore();
+                    }
+                }
+
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, r, 0, Math.PI*2);
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeStyle = '#bdc3c7';
+                this.ctx.stroke();
+            },
+
+            drawCharge: function(x, y, color, symbol) {
+                // 粒子大小隨螢幕比例縮放
+                const scale = Math.min(this.width, this.height) / 450;
+                const r = this.CONFIG.particleSize * scale; 
+
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, r, 0, Math.PI*2);
+                this.ctx.fillStyle = '#fff';
+                this.ctx.fill();
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeStyle = color;
+                this.ctx.stroke();
+
+                this.ctx.fillStyle = color;
+                this.ctx.font = `bold ${r*1.2}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(symbol, x, y + 1);
+            },
+
+            drawRod: function() {
+                this.ctx.save();
+                this.ctx.translate(this.rod.x, this.rod.y);
+                this.ctx.rotate(this.rod.angle); 
+
+                const L = this.rodSize.L;
+                const W = this.rodSize.W;
+                const chargeColor = this.rod.charge < 0 ? '#3498db' : '#e74c3c';
+                const symbol = this.rod.charge < 0 ? '-' : '+';
+                
+                this.ctx.fillStyle = (this.rod.charge < 0) ? '#34495e' : 'rgba(236, 240, 241, 0.95)';
+                this.ctx.beginPath();
+                this.ctx.roundRect(-L/2, -W/2, L, W, W/2);
+                this.ctx.fill();
+                this.ctx.strokeStyle = '#bdc3c7';
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+
+                const headX = L/2 - W/2;
+                const headR = W * 0.8;
+                this.ctx.beginPath();
+                this.ctx.arc(headX, 0, headR, 0, Math.PI*2);
+                this.ctx.fillStyle = '#fff'; 
+                this.ctx.fill();
+                this.ctx.strokeStyle = chargeColor; 
+                this.ctx.lineWidth = 4;
+                this.ctx.stroke();
+
+                this.ctx.fillStyle = chargeColor;
+                this.ctx.font = 'bold 28px Arial';
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(symbol, headX, 2);
+
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.fillRect(-L/2, -W/2, 40, W); 
+                this.ctx.strokeStyle = '#555';
+                this.ctx.lineWidth = 2;
+                for(let i=0; i<3; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(-L/2 + 10 + i*10, -W/2);
+                    this.ctx.lineTo(-L/2 + 10 + i*10, W/2);
+                    this.ctx.stroke();
+                }
+
+                this.ctx.restore();
+            },
+
+            getPos: function(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                let cx, cy;
+                if (e.touches && e.touches.length > 0) {
+                    cx = e.touches[0].clientX;
+                    cy = e.touches[0].clientY;
+                } else if (e.clientX !== undefined) {
+                    cx = e.clientX;
+                    cy = e.clientY;
+                } else {
+                    return {x: this.rod.x, y: this.rod.y};
+                }
+
+                // 直接回傳相對於 Canvas 的位置 (因為現在 Canvas 是 1:1 對應螢幕像素)
+                let screenX = cx - rect.left;
+                let screenY = cy - rect.top;
+                return { x: screenX, y: screenY };
+            },
+
+            handleMouse: function(e) {
+                if (e.type === 'mousedown') this.startDrag(e);
+                else if (e.type === 'mousemove') this.drag(e);
+                else if (e.type === 'mouseup' || e.type === 'mouseleave') this.endDrag(e);
+            },
+
+            handleTouch: function(e) {
+                e.preventDefault();
+                if (e.type === 'touchstart') this.startDrag(e);
+                else if (e.type === 'touchmove') this.drag(e);
+                else if (e.type === 'touchend') this.endDrag(e);
+            },
+
+            startDrag: function(e) {
+                let p = this.getPos(e);
+                let dist = Math.sqrt(Math.pow(p.x - this.rod.x, 2) + Math.pow(p.y - this.rod.y, 2));
+                if (dist < 150) {
+                    this.rod.dragging = true;
+                    this.updateRodPos(p.x, p.y);
+                }
+            },
+
+            drag: function(e) {
+                if (!this.rod.dragging) return;
+                let p = this.getPos(e);
+                this.updateRodPos(p.x, p.y);
+            },
+
+            endDrag: function() {
+                this.rod.dragging = false;
+            },
+
+            updateRodPos: function(targetX, targetY) {
+                let dxRod = this.conductor.x - targetX;
+                let dyRod = this.conductor.y - targetY;
+                let angle = Math.atan2(dyRod, dxRod);
+
+                let halfL = this.rodSize.L / 2;
+                let tipX = targetX + Math.cos(angle) * halfL;
+                let tipY = targetY + Math.sin(angle) * halfL;
+
+                // 邊界檢查 (使用動態寬高)
+                tipX = Math.max(0, Math.min(this.width, tipX));
+                tipY = Math.max(0, Math.min(this.height, tipY));
+
+                this.rod.x = tipX - Math.cos(angle) * halfL;
+                this.rod.y = tipY - Math.sin(angle) * halfL;
+
+                let finalDx = this.conductor.x - this.rod.x;
+                let finalDy = this.conductor.y - this.rod.y;
+                let dist = Math.sqrt(finalDx*finalDx + finalDy*finalDy);
+                let minSafeDist = halfL + this.conductor.r + this.CONFIG.gap;
+
+                if (dist < minSafeDist) {
+                     this.rod.x = this.conductor.x - Math.cos(angle) * minSafeDist;
+                     this.rod.y = this.conductor.y - Math.sin(angle) * minSafeDist;
+                }
+            },
+
+            setRod: function(c) {
+                this.rod.charge = c;
+                document.getElementById('btnNeg').className = c===-1 ? 'btn-toggle active-neg' : 'btn-toggle';
+                document.getElementById('btnPos').className = c===1 ? 'btn-toggle active-pos' : 'btn-toggle';
+            },
+
+            loop: function() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.loop());
+            }
+        };
+
+        // 啟動
+        window.onload = function() {
+            APP.init();
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>晟自然輔助系統　接觸起電</title>
+    
+    <style>
+        /* =========================================
+           1. 全局設定：強制一頁式 (No Scroll) - 來自專案A
+           ========================================= */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;   
+            height: 100dvh;  /* Mobile Safari 底部對齊優化 */
+            overflow: hidden; 
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center; 
+            
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-color: #2c3e50;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            touch-action: none; /* 禁止瀏覽器預設觸控行為 */
+            user-select: none;  /* 禁止選取文字 */
+        }
+
+        /* =========================================
+           2. 標準標題區 (Header Container) - 來自專案A
+           ========================================= */
+        .header-container {
+            flex-shrink: 0;
+            width: 97%;
+            box-sizing: border-box;
+            max-width: 800px;
+            
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            
+            padding: 8px 15px;
+            margin-top: 5px;
+            margin-bottom: 8px;
+            
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+        }
+
+        .header-container h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #333;
+            line-height: 1.3;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .title-logo {
+            height: 36px;
+            width: auto;
+            border-radius: 4px;
+        }
+
+        .header-btn {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            background: #06c755; 
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s, background 0.2s;
+            white-space: nowrap;
+        }
+        
+        .header-btn:active {
+            transform: scale(0.95);
+        }
+
+        .header-btn span {
+            margin-right: 4px;
+        }
+
+        /* =========================================
+           3. 中間模擬區 (Main Simulation) - 自動填滿
+           ========================================= */
+        #sim-container {
+            flex: 1; 
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        /* 浮動提示標籤 */
+        .instruction-tag {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            color: #555;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            pointer-events: none; 
+            white-space: nowrap;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        
+        .instruction-tag.step-active {
+            color: #2c3e50;
+            border: 2px solid #3498db;
+            background: #fff;
+        }
+        
+        .instruction-tag.success {
+            color: #fff;
+            background: #e67e22;
+            border-color: #e67e22;
+            box-shadow: 0 4px 20px rgba(230, 126, 34, 0.4);
+        }
+
+        /* =========================================
+           4. 底部控制區 (Footer Controls) - 來自專案A
+           ========================================= */
+        .controls {
+            flex: 0 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            
+            padding: 10px 15px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .controls-left, .controls-right {
+            display: flex;
+            align-items: center;
+        }
+
+        /* 膠囊開關樣式 */
+        .switch-capsule {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f3f5;
+            border-radius: 100px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+            padding: 5px 15px;  /* 改回 15px，讓左右寬鬆一點 */
+            gap: 10px;          /* 改回 10px，讓按鈕之間不那麼擠 */
+        }
+
+        .btn-toggle {
+            width: 44px; height: 44px;
+            border: none; border-radius: 50%;
+            font-size: 1.5rem; font-weight: 800;
+            cursor: pointer;
+            background: transparent; color: #bdc3c7;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0; /* 關鍵：加入這行，禁止按鈕變形 */
+        }
+        .btn-toggle:active { transform: scale(0.95); }
+        .btn-toggle.active-neg { background: #3498db; color: white; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
+        .btn-toggle.active-pos { background: #e74c3c; color: white; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); }
+        
+        /* 特製：重置按鈕 (整合進膠囊) */
+        .btn-reset {
+            font-size: 1.4rem; /* 原本是 1.2rem，改大一點對齊 B */
+            color: #e74c3c;
+            width: 44px; height: 44px;
+        }
+
+        /* --- 修改 3：標籤樣式微調 (移除 margin-left，由 gap 統一控制) --- */
+        .deck-label { 
+            font-size: 0.9rem; 
+            font-weight: 700; 
+            color: #666; 
+            white-space: nowrap; 
+            margin-right: 5px; 
+            /* 移除原本的 margin-left: 5px，交給 gap 控制 */
+        }
+        
+        /* --- 修改 4：分隔線樣式 (統一 margin) --- */
+        .divider { 
+            width: 1px; 
+            height: 24px; 
+            background: #cbd5e0; 
+            margin: 0 2px; /* 統一為 2px，原本是 5px */
+        }
+
+        /* 返回按鈕 */
+        .btn-return {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: #fff;
+            color: #555;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
+            font-size: 1.4rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .btn-return:active { transform: scale(0.9); background: #f0f0f0; }
+
+        /* RWD: 手機直式時，標題過長自動換行 */
+        .mobile-break { display: none; }
+        
+        @media (max-width: 600px) {
+            .mobile-break { display: block; height: 0; }
+            .header-container h1 { font-size: 1rem; }
+            .header-btn { padding: 5px 10px; font-size: 0.85rem; }
+            .header-btn span { display: none; } /* 手機版太窄時，隱藏手指圖示 */
+			.instruction-bar {
+    			font-size: 0.8rem; /* 手機字體縮小 */
+				padding: 5px 15px;
+				width: 90%; /* 手機上寬度稍微放寬 */
+				margin-top: 5px; /* 手機版不使用負邊距，避免太擁擠 */
+				margin-bottom: 10px;
+				flex-direction: row; /* 保持水平排列 */
+				flex-wrap: nowrap; /* 盡量不換行，若字太多會自動縮小 */
+				}
+        }
+        
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1>
+            <img src="logo.jpg" alt="Logo" class="title-logo" onerror="this.style.display='none'">
+            <div>
+                晟自然輔助系統　接觸起電
+            </div>
+        </h1>
+        <div class="nav-buttons">
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="header-btn">
+                <span>👉</span>加 LINE 提問
+            </a>       
+        </div>
+    </div>
+
+    <div id="sim-container">
+        <div class="instruction-tag" id="infoTag">請將帶電棒「靠近」金屬球</div>
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="controls-left">
+            <div class="switch-capsule">
+                <span class="deck-label">帶電棒</span>
+                
+                <button class="btn-toggle active-neg" id="btnNeg" onclick="APP.setRod(-1)">－</button>
+                <button class="btn-toggle" id="btnPos" onclick="APP.setRod(1)">＋</button>
+                
+                <div class="divider"></div>
+                
+                <button class="btn-toggle btn-reset" onclick="APP.reset()" title="重置">↺</button>
+            </div>
+        </div>
+
+        <div class="controls-right">
+            <a href="index.html" class="btn-return" title="返回實驗室">↩</a>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * 整合版：專案C (邏輯) + 專案A (UI架構)
+         * 維持所有物理參數與邏輯不變
+         */
+        const APP = {
+            canvas: null,
+            ctx: null,
+            wrapper: null,
+            width: 0,
+            height: 0,
+            dpr: 1,
+
+            // --- 來自專案C 的核心變數 ---
+            pendulum: {
+                pivotX: 0, pivotY: 0, length: 0,
+                angle: 0, aVel: 0, aAcc: 0,
+                mass: 1, r: 0, x: 0, y: 0,
+                damping: 0.96 
+            },
+
+            rod: { 
+                x: 0, y: 0, 
+                charge: -1, 
+                dragging: false, 
+                angle: -Math.PI/2,
+                load: 8 
+            }, 
+            
+            rodSize: { L: 120, W: 34 }, 
+
+            particles: [], 
+            protons: [],   
+            
+            state: {
+                isTouching: false,
+                transferTimer: 0,
+                repulsionDelay: 0,
+                forcedRepel: false 
+            },
+
+            CONFIG: {
+                radiusBase: 70,     
+                particleSize: 11,   
+                rodLen: 120,        
+                rodW: 34,           
+                
+                gravity: 0.025,           
+                k_coulomb: 0.8,           
+                k_particle_repulsion: 30, 
+                inductionRange: 300,      
+                
+                maxForce: 0.02,          
+                deadZoneY: 0.7            
+            },
+
+            init: function() {
+                // 使用專案A的容器 ID
+                this.wrapper = document.getElementById('sim-container');
+                this.canvas = document.getElementById('simCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.dpr = window.devicePixelRatio || 1;
+
+                // 綁定事件
+                const bind = (evts, handler) => evts.forEach(e => this.canvas.addEventListener(e, handler, {passive: false}));
+                bind(['mousedown', 'mousemove', 'mouseup', 'mouseleave'], e => this.handleMouse(e));
+                bind(['touchstart', 'touchmove', 'touchend'], e => this.handleTouch(e));
+                
+                window.addEventListener('resize', () => this.resize());
+
+                this.resize();
+                this.loop();
+            },
+
+            // --- 修正 Resize 邏輯以適應專案A的 Flex 佈局 ---
+            resize: function() {
+                const rect = this.wrapper.getBoundingClientRect();
+                this.width = rect.width;
+                this.height = rect.height;
+                
+                this.canvas.width = this.width * this.dpr;
+                this.canvas.height = this.height * this.dpr;
+                this.ctx.scale(this.dpr, this.dpr);
+
+                // 根據新版面動態計算支點 (保持與專案C相對位置一致)
+                this.pendulum.pivotX = this.width * 0.5; // 改為正中央，專案A風格
+                this.pendulum.pivotY = -50; 
+                this.pendulum.length = this.height * 0.55;
+                
+                // 物理縮放基準 (維持專案C參數 400)
+                let scale = Math.min(this.width, this.height) / 400;
+                this.pendulum.r = this.CONFIG.radiusBase * scale;
+                
+                this.rodSize = { 
+                    L: this.CONFIG.rodLen * scale, 
+                    W: this.CONFIG.rodW * scale 
+                };
+
+                // 更新單擺位置
+                this.pendulum.x = this.pendulum.pivotX + this.pendulum.length * Math.sin(this.pendulum.angle);
+                this.pendulum.y = this.pendulum.pivotY + this.pendulum.length * Math.cos(this.pendulum.angle);
+
+                // 若是初次載入或重置，確保帶電棒位置正確
+                if (this.protons.length === 0) this.reset();
+            },
+
+            reset: function() {
+                this.state.isTouching = false;
+                this.state.transferTimer = 0;
+                this.state.repulsionDelay = 0;
+                this.state.forcedRepel = false;
+                
+                this.rod.x = this.width * 0.20; 
+                this.rod.y = this.height * 0.85; // 微調初始位置，避免被底部遮擋
+                this.rod.load = 8; 
+                
+                this.pendulum.angle = 0;
+                this.pendulum.aVel = 0;
+                this.pendulum.aAcc = 0;
+                
+                this.pendulum.x = this.pendulum.pivotX;
+                this.pendulum.y = this.pendulum.pivotY + this.pendulum.length;
+                
+                this.initParticles();
+                this.updateInstruction();
+            },
+
+            initParticles: function() {
+                this.particles = [];
+                this.protons = [];
+                const r = this.pendulum.r;
+                
+                const pOffset = r * 0.45;
+                this.protons.push({dx: -pOffset, dy: -pOffset});
+                this.protons.push({dx: pOffset, dy: -pOffset});
+                this.protons.push({dx: -pOffset, dy: pOffset});
+                this.protons.push({dx: pOffset, dy: pOffset});
+                
+                for(let i=0; i<4; i++) {
+                    let angle = (i / 4) * Math.PI * 2; 
+                    let dist = r * 0.5; 
+                    
+                    let startX = this.pendulum.x + Math.cos(angle) * dist;
+                    let startY = this.pendulum.y + Math.sin(angle) * dist;
+                    
+                    this.particles.push({
+                        x: startX, y: startY, 
+                        dx: Math.cos(angle) * dist, 
+                        dy: Math.sin(angle) * dist,
+                        vx: 0, vy: 0,
+                        state: 'stable',
+                        id: i
+                    });
+                }
+            },
+
+            // --- 物理邏輯 (完全保留專案C) ---
+            update: function() {
+                let pen = this.pendulum;
+                pen.x = pen.pivotX + pen.length * Math.sin(pen.angle);
+                pen.y = pen.pivotY + pen.length * Math.cos(pen.angle);
+
+                let halfL = this.rodSize.L / 2;
+                let tipX = this.rod.x + Math.cos(this.rod.angle) * halfL;
+                let tipY = this.rod.y + Math.sin(this.rod.angle) * halfL; 
+
+                let dx = pen.x - tipX;
+                let dy = pen.y - tipY;
+                let dist = Math.sqrt(dx*dx + dy*dy);
+                let safeDist = Math.max(dist, 40); 
+                let collisionDist = pen.r + this.rodSize.W * 0.6;
+
+                let electrons = this.particles.length;
+                let sphereChargeSign = 0;
+                if (electrons >= 8) sphereChargeSign = -1; 
+                if (electrons <= 1) sphereChargeSign = 1;  
+                
+                let chargeProduct = this.rod.charge * sphereChargeSign;
+
+                let transferComplete = (this.rod.load <= 4);
+
+                if (dist < collisionDist && !this.state.forcedRepel) {
+                    if (!transferComplete) {
+                        this.state.isTouching = true;
+                        this.state.repulsionDelay = 0; 
+                        pen.aVel = 0; 
+                        pen.aAcc = 0; 
+                        this.handleTransferAnimation(tipX, tipY);
+                    } else {
+                        this.state.isTouching = true; 
+                        pen.aVel = 0;
+                        pen.aAcc = 0;
+                        
+                        this.state.repulsionDelay++;
+                        if (this.state.repulsionDelay > 25) { 
+                            this.state.isTouching = false;
+                            this.state.forcedRepel = true; 
+                            pen.aVel += (dx > 0) ? 0.003 : -0.003; 
+                        }
+                    }
+                } else {
+                    this.state.isTouching = false;
+                    if (dist > 300) this.state.forcedRepel = false;
+                    
+                    let forceMag = 0;
+                    let isSafeZone = (this.rod.y > this.height * this.CONFIG.deadZoneY);
+
+                    if (!isSafeZone) {
+                        let effectiveProduct = chargeProduct;
+                        if (this.state.forcedRepel) effectiveProduct = 1;
+
+                        if (effectiveProduct > 0) {
+                            forceMag = (this.CONFIG.k_coulomb * 1200) / (safeDist + 10);
+                        } else {
+                            forceMag = -1 * (this.CONFIG.k_coulomb * 700) / (safeDist + 40);
+                        }
+                    }
+
+                    let fx = (dx / safeDist) * forceMag;
+                    let torqueMultiplier = (forceMag < 0) ? 0.12 : 0.3; 
+                    let electricTorque = fx * Math.cos(pen.angle) * torqueMultiplier; 
+                    let gravityTorque = -this.CONFIG.gravity * Math.sin(pen.angle);
+                    let totalTorque = gravityTorque + electricTorque;
+                    
+                    pen.aAcc = totalTorque;
+                    pen.aVel += pen.aAcc;
+                    pen.aVel *= pen.damping; 
+                    
+                    let speedLimit = 0.006; 
+                    if (pen.aVel > speedLimit) pen.aVel = speedLimit;
+                    if (pen.aVel < -speedLimit) pen.aVel = -speedLimit;
+                    if (Math.abs(pen.aVel) < 0.00005) pen.aVel = 0;
+                    
+                    pen.angle += pen.aVel;
+                    
+                    // 擺動角度限制
+                    let margin = (this.width / 2) - pen.r - 20; 
+                    let calculatedMax = Math.asin(Math.max(0, Math.min(1, margin / pen.length)));
+                    if (isNaN(calculatedMax)) calculatedMax = 0.3;
+                    let limitAngle = Math.min(0.45, calculatedMax);
+                    if (pen.angle > limitAngle) { pen.angle = limitAngle; pen.aVel = 0; }
+                    if (pen.angle < -limitAngle) { pen.angle = -limitAngle; pen.aVel = 0; }
+                }
+
+                this.updateParticles(pen, tipX, tipY, this.rod.y > this.height * 0.7);
+                this.updateInstruction();
+            },
+
+            updateParticles: function(pen, tipX, tipY, isSafeZone) {
+                let dist = Math.sqrt((pen.x - tipX)**2 + (pen.y - tipY)**2);
+                let collisionDist = pen.r + this.rodSize.W * 0.6;
+                let isRodActive = !isSafeZone && !this.state.forcedRepel;
+
+                if (isSafeZone) {
+                    this.applyFormation(pen, 'return');
+                    return;
+                }
+
+                if (isRodActive) {
+                    this.applyInductionVisuals(pen, tipX, tipY);
+                } else {
+                    for(let iter=0; iter<15; iter++) {
+                        this.resolveCollisions();
+                    }
+                    this.applyStandardPhysics(pen, tipX, tipY);
+                    return;
+                }
+
+                for (let i = 0; i < this.particles.length; i++) {
+                    let p = this.particles[i];
+                    
+                    if (p.state === 'transfer_out') {
+                        let tx = tipX - p.x;
+                        let ty = tipY - p.y;
+                        let d = Math.sqrt(tx*tx + ty*ty);
+                        if (d < 10) {
+                            this.particles.splice(i, 1);
+                            i--;
+                        } else {
+                            p.x += tx * 0.2; 
+                            p.y += ty * 0.2;
+                        }
+                    } else if (p.state === 'transfer_in') {
+                        let tx = pen.x - p.x;
+                        let ty = pen.y - p.y;
+                        let d = Math.sqrt(tx*tx + ty*ty);
+                        p.x += (tx/d) * 5; 
+                        p.y += (ty/d) * 5;
+                        if (d < pen.r * 0.5) p.state = 'stable';
+                    }
+                }
+            },
+
+            applyStandardPhysics: function(pen, tipX, tipY) {
+                const friction = 0.82; 
+                for (let i = 0; i < this.particles.length; i++) {
+                    let p = this.particles[i];
+                    if (p.x === 0 && p.y === 0 && pen.x !== 0) { p.x = pen.x + p.dx; p.y = pen.y + p.dy; }
+                    
+                    if (p.state !== 'stable') continue; 
+
+                    let totalFx = 0;
+                    let totalFy = 0;
+
+                    for (let j = 0; j < this.particles.length; j++) {
+                        if (i === j) continue;
+                        let p2 = this.particles[j];
+                        if (p2.state !== 'stable') continue;
+                        let ddx = p.x - p2.x;
+                        let ddy = p.y - p2.y;
+                        let d2 = ddx*ddx + ddy*ddy;
+                        if (d2 < 4000) {
+                            let d = Math.sqrt(d2);
+                            let f = (this.CONFIG.k_particle_repulsion / d);
+                            f = Math.min(f, 4.0); 
+                            totalFx += (ddx/d) * f;
+                            totalFy += (ddy/d) * f;
+                        }
+                    }
+
+                    let rdx = p.x - tipX;
+                    let rdy = p.y - tipY;
+                    let rd2 = rdx*rdx + rdy*rdy;
+                    let rodDist = Math.sqrt(rd2);
+                    
+                    if (this.state.forcedRepel || this.particles.length !== 4) {
+                        if ((this.rod.charge < 0 && this.particles.length > 4) || 
+                            (this.rod.charge > 0 && this.particles.length < 4)) {
+                            let overrideForce = 15.0; 
+                            totalFx += (rdx/rodDist) * overrideForce;
+                            totalFy += (rdy/rodDist) * overrideForce;
+                        }
+                    }
+
+                    p.vx = (p.vx + totalFx) * friction; 
+                    p.vy = (p.vy + totalFy) * friction;
+                    
+                    if (Math.abs(p.vx) < 0.05) p.vx = 0;
+                    if (Math.abs(p.vy) < 0.05) p.vy = 0;
+
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    let limitR = pen.r - this.CONFIG.particleSize - 2; 
+                    let pdx = p.x - pen.x;
+                    let pdy = p.y - pen.y;
+                    let pdist = Math.sqrt(pdx*pdx + pdy*pdy);
+                    if (pdist > limitR) {
+                        let ang = Math.atan2(pdy, pdx);
+                        p.x = pen.x + limitR * Math.cos(ang);
+                        p.y = pen.y + limitR * Math.sin(ang);
+                        p.vx = 0; p.vy = 0;
+                    }
+                }
+            },
+
+            applyInductionVisuals: function(pen, tipX, tipY) {
+                let count = this.particles.length;
+                if (count === 0) return;
+
+                let dx = tipX - pen.x;
+                let dy = tipY - pen.y;
+                let rodAngle = Math.atan2(dy, dx);
+
+                let targetAngleBase;
+                if (this.rod.charge === -1) {
+                    targetAngleBase = rodAngle + Math.PI;
+                } else {
+                    targetAngleBase = rodAngle;
+                }
+
+                let radius = pen.r - this.CONFIG.particleSize - 5; 
+                
+                let safeAngle = (this.CONFIG.particleSize * 2.1) / radius;
+
+                for (let i = 0; i < count; i++) {
+                    let p = this.particles[i];
+                    if (p.state !== 'stable') continue;
+
+                    let offset = (i - (count - 1) / 2) * safeAngle; 
+                    let finalAngle = targetAngleBase + offset;
+
+                    let targetX = pen.x + Math.cos(finalAngle) * radius;
+                    let targetY = pen.y + Math.sin(finalAngle) * radius;
+
+                    p.x += (targetX - p.x) * 0.2;
+                    p.y += (targetY - p.y) * 0.2;
+                    
+                    p.vx = 0; p.vy = 0;
+                }
+            },
+
+            resolveCollisions: function() {
+                const minDist = this.CONFIG.particleSize * 2.0; 
+                const minDistSq = minDist * minDist;
+
+                for (let i = 0; i < this.particles.length; i++) {
+                    let p1 = this.particles[i];
+                    if (p1.state !== 'stable') continue;
+                    
+                    for (let j = i + 1; j < this.particles.length; j++) {
+                        let p2 = this.particles[j];
+                        if (p2.state !== 'stable') continue;
+
+                        let dx = p1.x - p2.x;
+                        let dy = p1.y - p2.y;
+                        let d2 = dx*dx + dy*dy;
+
+                        if (d2 < minDistSq && d2 > 0.001) {
+                            let d = Math.sqrt(d2);
+                            let overlap = minDist - d;
+                            
+                            let nx = dx / d;
+                            let ny = dy / d;
+                            let moveX = nx * overlap * 0.5; 
+                            let moveY = ny * overlap * 0.5;
+                            
+                            p1.x += moveX;
+                            p1.y += moveY;
+                            p2.x -= moveX;
+                            p2.y -= moveY;
+                            
+                            p1.vx = 0; p1.vy = 0;
+                            p2.vx = 0; p2.vy = 0;
+                        }
+                    }
+                }
+            },
+
+            applyFormation: function(pen, mode) {
+                let count = this.particles.length;
+                if (count === 0) return;
+
+                let radius = pen.r - this.CONFIG.particleSize - 5;
+                let startAngle = -Math.PI / 2; 
+                
+                for (let i = 0; i < count; i++) {
+                    let p = this.particles[i];
+                    if (p.state !== 'stable') continue;
+
+                    let targetX, targetY;
+
+                    if (count <= 4) {
+                        let angle = (i / count) * Math.PI * 2;
+                        let r = pen.r * 0.5; 
+                        targetX = pen.x + Math.cos(angle) * r;
+                        targetY = pen.y + Math.sin(angle) * r;
+                    } else {
+                        let angle = startAngle + (i / count) * Math.PI * 2;
+                        targetX = pen.x + Math.cos(angle) * radius;
+                        targetY = pen.y + Math.sin(angle) * radius;
+                    }
+
+                    p.x += (targetX - p.x) * 0.1;
+                    p.y += (targetY - p.y) * 0.1;
+                    
+                    p.vx = 0; p.vy = 0;
+                }
+            },
+
+            handleTransferAnimation: function(tipX, tipY) {
+                this.state.transferTimer++;
+                if (this.state.transferTimer < 15) return; 
+                this.state.transferTimer = 0;
+
+                if (this.rod.load <= 4) return;
+
+                if (this.rod.charge === -1) {
+                    if (this.particles.length < 8) {
+                        this.rod.load--; 
+                        
+                        let spawnX = tipX + (Math.random()-0.5)*5;
+                        let spawnY = tipY + (Math.random()-0.5)*5;
+                        this.particles.push({
+                            x: spawnX, y: spawnY,
+                            dx: 0, dy: 0,
+                            vx: 0, vy: 0,
+                            state: 'transfer_in',
+                            id: this.particles.length
+                        });
+                    }
+                } else {
+                    if (this.particles.length > 0) {
+                        let closestP = null;
+                        let minDist = Infinity;
+                        
+                        this.particles.forEach(p => {
+                            if (p.state === 'stable') {
+                                let d = (p.x - tipX)**2 + (p.y - tipY)**2;
+                                if (d < minDist) {
+                                    minDist = d;
+                                    closestP = p;
+                                }
+                            }
+                        });
+
+                        if (closestP) {
+                            closestP.state = 'transfer_out';
+                            this.rod.load--; 
+                        }
+                    }
+                }
+            },
+
+            updateInstruction: function() {
+                const tag = document.getElementById('infoTag');
+                const electrons = this.particles.length;
+                let msg = "";
+                let className = "instruction-tag";
+                
+                if (!this.state.isTouching) {
+                    if (electrons >= 4 && electrons <= 5) {
+                        if (this.rod.y < this.height * 0.7) {
+                            msg = "尚未接觸前：觀察靜電感應";
+                        } else {
+                            msg = "請將帶電棒「靠近」金屬球";
+                        }
+                        className += " step-active";
+                    } else if (electrons < 4) {
+                        msg = "實驗結果：金屬球被同化，變成正電球";
+                        className += " success";
+                    } else if (electrons >= 8) {
+                        msg = "實驗結果：金屬球被同化，變成負電球";
+                        className += " success";
+                    }
+                } else {
+                    let symbol = this.rod.charge === -1 ? "-" : "+";
+                    let currentLoad = this.rod.load;
+                    msg = `接觸起電：電荷均分 → 排斥現象`;
+                    className += " success";
+                }
+
+                if (tag.innerText !== msg) tag.innerText = msg;
+                tag.className = className;
+            },
+
+            draw: function() {
+                this.ctx.clearRect(0, 0, this.width, this.height);
+                this.drawConductor();
+                
+                this.protons.forEach(p => {
+                    let px = this.pendulum.x + p.dx;
+                    let py = this.pendulum.y + p.dy;
+                    this.drawCharge(px, py, '#e74c3c', '+');
+                });
+                
+                this.particles.forEach(p => {
+                    this.drawCharge(p.x, p.y, '#3498db', '-');
+                });
+
+                if (this.state.isTouching) this.drawSpark();
+                this.drawRod();
+            },
+
+            drawConductor: function() {
+                const {x, y, r, pivotX, pivotY} = this.pendulum;
+                this.ctx.beginPath();
+                this.ctx.moveTo(pivotX, pivotY);
+                this.ctx.lineTo(x, y);
+                this.ctx.lineWidth = 3;
+                this.ctx.strokeStyle = '#7f8c8d';
+                this.ctx.stroke();
+
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, r, 0, Math.PI*2);
+                let grad = this.ctx.createRadialGradient(x - r*0.3, y - r*0.3, r*0.1, x, y, r);
+                grad.addColorStop(0, '#f8f9fa');
+                grad.addColorStop(1, '#bdc3c7');
+                this.ctx.fillStyle = grad;
+                this.ctx.fill();
+                this.ctx.lineWidth = 2;
+                this.ctx.strokeStyle = '#95a5a6';
+                this.ctx.stroke();
+
+                let netCharge = 4 - this.particles.length;
+                let displayStr = (netCharge > 0 ? "+" : "") + netCharge;
+                if (netCharge === 0) displayStr = "0";
+
+                let fontScale = r * 0.8; 
+                this.ctx.font = `bold ${fontScale}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                if (netCharge === 0) this.ctx.fillStyle = 'rgba(127, 140, 141, 0.3)'; 
+                else if (netCharge > 0) this.ctx.fillStyle = 'rgba(231, 76, 60, 0.3)'; 
+                else this.ctx.fillStyle = 'rgba(52, 152, 219, 0.3)'; 
+                
+                this.ctx.fillText(displayStr, x, y);
+            },
+
+            drawSpark: function() {
+                let halfL = this.rodSize.L / 2;
+                let tipX = this.rod.x + Math.cos(this.rod.angle) * halfL;
+                let tipY = this.rod.y + Math.sin(this.rod.angle) * halfL;
+
+                this.ctx.save();
+                this.ctx.globalCompositeOperation = 'lighter';
+                let grad = this.ctx.createRadialGradient(tipX, tipY, 0, tipX, tipY, 40);
+                grad.addColorStop(0, 'rgba(241, 196, 15, 0.6)');
+                grad.addColorStop(1, 'rgba(241, 196, 15, 0)');
+                this.ctx.fillStyle = grad;
+                this.ctx.beginPath();
+                this.ctx.arc(tipX, tipY, 40, 0, Math.PI*2);
+                this.ctx.fill();
+                this.ctx.restore();
+            },
+
+            drawCharge: function(x, y, color, symbol) {
+                if (isNaN(x) || isNaN(y)) return; 
+                const scale = Math.min(this.width, this.height) / 400; // 統一使用 400 基準
+                const r = this.CONFIG.particleSize * scale; 
+                
+                this.ctx.beginPath();
+                this.ctx.arc(x, y, r, 0, Math.PI*2);
+                this.ctx.fillStyle = '#fff';
+                this.ctx.fill();
+                this.ctx.lineWidth = 1.5;
+                this.ctx.strokeStyle = color;
+                this.ctx.stroke();
+                this.ctx.fillStyle = color;
+                this.ctx.font = `bold ${r*1.3}px Arial`;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                this.ctx.fillText(symbol, x, y + 1);
+            },
+
+            drawRod: function() {
+                this.ctx.save();
+                this.ctx.translate(this.rod.x, this.rod.y);
+                this.ctx.rotate(this.rod.angle); 
+
+                const L = this.rodSize.L;
+                const W = this.rodSize.W;
+                const chargeColor = this.rod.charge < 0 ? '#3498db' : '#e74c3c';
+                const symbol = this.rod.charge < 0 ? '-' : '+';
+                
+                this.ctx.fillStyle = (this.rod.charge < 0) ? '#34495e' : 'rgba(236, 240, 241, 0.95)'; // 配合 A 風格微調質感
+                this.ctx.beginPath();
+                
+                let x = -L/2, y = -W/2, width = L, height = W, radius = W/2;
+                this.ctx.moveTo(x + radius, y);
+                this.ctx.lineTo(x + width - radius, y);
+                this.ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+                this.ctx.lineTo(x + width, y + height - radius);
+                this.ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+                this.ctx.lineTo(x + radius, y + height);
+                this.ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+                this.ctx.lineTo(x, y + radius);
+                this.ctx.quadraticCurveTo(x, y, x + radius, y);
+                this.ctx.closePath();
+                this.ctx.fill();
+                
+                this.ctx.strokeStyle = '#bdc3c7';
+                this.ctx.lineWidth = 1;
+                this.ctx.stroke();
+
+                const headX = L/2 - W/2; 
+                const headR = W * 0.8;
+                this.ctx.beginPath();
+                this.ctx.arc(headX, 0, headR, 0, Math.PI*2);
+                this.ctx.fillStyle = '#fff'; 
+                this.ctx.fill();
+                this.ctx.strokeStyle = chargeColor; 
+                this.ctx.lineWidth = 4;
+                this.ctx.stroke();
+
+                this.ctx.save();
+                this.ctx.translate(headX, 0); 
+                this.ctx.rotate(-this.rod.angle); 
+                this.ctx.fillStyle = chargeColor;
+                this.ctx.textAlign = 'center';
+                this.ctx.textBaseline = 'middle';
+                
+                let displayNum = this.rod.load;
+                let displaySymbol = (this.rod.charge < 0) ? "-" : "+";
+                
+                this.ctx.font = 'bold 26px Arial';
+                this.ctx.fillText(displaySymbol + displayNum, 0, 1); 
+
+                this.ctx.restore(); 
+
+                this.ctx.fillStyle = '#2c3e50';
+                this.ctx.fillRect(-L/2, -W/2, 40, W); 
+                this.ctx.strokeStyle = '#555'; // 增加把手細節
+                this.ctx.lineWidth = 2;
+                for(let i=0; i<3; i++) {
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(-L/2 + 10 + i*10, -W/2);
+                    this.ctx.lineTo(-L/2 + 10 + i*10, W/2);
+                    this.ctx.stroke();
+                }
+                
+                this.ctx.restore();
+            },
+
+            // --- 輸入事件處理 (保留 C 的邏輯，使用新的 getPos) ---
+            getPos: function(e) {
+                // 直接回傳相對於 Canvas 的位置 (因為現在 Canvas 是 1:1 對應螢幕像素)
+                const rect = this.canvas.getBoundingClientRect();
+                let cx, cy;
+                if (e.touches && e.touches.length > 0) {
+                    cx = e.touches[0].clientX;
+                    cy = e.touches[0].clientY;
+                } else if (e.clientX !== undefined) {
+                    cx = e.clientX;
+                    cy = e.clientY;
+                } else {
+                    return {x: this.rod.x, y: this.rod.y};
+                }
+                return { x: cx - rect.left, y: cy - rect.top };
+            },
+
+            handleMouse: function(e) {
+                if (e.type === 'mousedown') this.startDrag(e);
+                else if (e.type === 'mousemove') this.drag(e);
+                else if (e.type === 'mouseup' || e.type === 'mouseleave') this.endDrag(e);
+            },
+
+            handleTouch: function(e) {
+                e.preventDefault();
+                if (e.type === 'touchstart') this.startDrag(e);
+                else if (e.type === 'touchmove') this.drag(e);
+                else if (e.type === 'touchend') this.endDrag(e);
+            },
+
+            startDrag: function(e) {
+                let p = this.getPos(e);
+                let dist = Math.sqrt(Math.pow(p.x - this.rod.x, 2) + Math.pow(p.y - this.rod.y, 2));
+                // 擴大點擊判定範圍，提升手機體驗
+                if (dist < 150) {
+                    this.rod.dragging = true;
+                    this.drag(e);
+                }
+            },
+
+            drag: function(e) {
+                if (!this.rod.dragging) return;
+                if (this.state.isTouching) return; 
+
+                let p = this.getPos(e);
+                
+                // 限制 Y 軸移動範圍 (從專案C保留的邏輯)
+                let sphereBottom = this.pendulum.y + this.pendulum.r;
+                let rodTopOffset = this.rodSize.L / 2;
+                let limitY = sphereBottom + rodTopOffset - 20; 
+
+                let maxY = this.height;
+                let minY = limitY; 
+                
+                let newY = Math.max(minY, Math.min(maxY, p.y));
+                this.rod.y = newY;
+                
+                // X 軸跟隨滑鼠，但限制不出界
+                this.rod.x = Math.max(0, Math.min(this.width, p.x));
+            },
+
+            endDrag: function() {
+                this.rod.dragging = false;
+            },
+
+            setRod: function(c) {
+                this.rod.charge = c;
+                this.reset(); 
+                document.getElementById('btnNeg').className = c===-1 ? 'btn-toggle active-neg' : 'btn-toggle';
+                document.getElementById('btnPos').className = c===1 ? 'btn-toggle active-pos' : 'btn-toggle';
+            },
+
+            loop: function() {
+                this.update();
+                this.draw();
+                requestAnimationFrame(() => this.loop());
+            }
+        };
+
+        window.onload = function() {
+            APP.init();
+        };
+
+    </script>
+</body>
+</html>

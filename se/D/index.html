@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>晟自然輔助系統　驗電器</title>
+    
+    <style>
+        /* =========================================
+           1. 全局設定
+           ========================================= */
+        :root {
+            --ground-color: #27ae60;
+        }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            background-color: #f0f2f5;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            touch-action: none;
+            user-select: none;
+        }
+
+        /* =========================================
+           2. 標題區
+           ========================================= */
+        .header-container {
+            flex-shrink: 0;
+            width: 97%;
+            box-sizing: border-box;
+            max-width: 800px;
+            display: flex;
+            justify-content: space-between; 
+            align-items: center;
+            padding: 8px 15px;
+            margin-top: 5px;
+            margin-bottom: 8px;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+        }
+
+        .header-container h1 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #333;
+            line-height: 1.3;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            white-space: nowrap;
+        }
+
+        .title-logo { height: 36px; width: auto; border-radius: 4px; }
+
+        .header-btn {
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 6px 12px;
+            background: #06c755;
+            color: white;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border-radius: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.1s;
+            white-space: nowrap;
+        }
+        .header-btn:active { transform: scale(0.95); }
+        .header-btn span { margin-right: 4px; }
+
+        /* =========================================
+           3. 模擬區
+           ========================================= */
+        #sim-container {
+            flex: 1; 
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            cursor: default;
+        }
+
+        canvas { display: block; width: 100%; height: 100%; }
+
+        .instruction-tag {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 8px 24px;
+            border-radius: 50px;
+            font-size: 0.95rem;
+            color: #555;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            pointer-events: none; 
+            white-space: nowrap;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .instruction-tag.highlight { color: #2c3e50; border: 2px solid #3498db; background: #fff; }
+        .instruction-tag.success { color: #fff; background: var(--ground-color); border-color: var(--ground-color); }
+
+        /* =========================================
+           4. 底部控制區
+           ========================================= */
+        .controls {
+            flex: 0 0 auto;
+            width: 100%;
+            box-sizing: border-box;
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(5px);
+            border-top: 1px solid rgba(0,0,0,0.1);
+            padding: 10px 15px;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .controls-left, .controls-right { display: flex; align-items: center; }
+
+        .switch-capsule {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f3f5;
+            border-radius: 100px;
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
+            padding: 5px 15px; 
+            gap: 10px;
+        }
+
+        .btn-toggle {
+            width: 44px; height: 44px;
+            border: none; border-radius: 50%;
+            font-size: 1.5rem; font-weight: 800;
+            cursor: pointer;
+            background: transparent; color: #bdc3c7;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            outline: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-toggle:active { transform: scale(0.95); }
+        .btn-toggle.active-neg { background: #3498db; color: white; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
+        .btn-toggle.active-pos { background: #e74c3c; color: white; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); }
+		.btn-toggle.active-contact { 
+            background: #f1c40f; 
+            color: #fff; 
+            border-color: #f1c40f; 
+            box-shadow: 0 0 15px rgba(241, 196, 15, 0.6); 
+            transform: scale(1.05);
+        }
+        .btn-toggle:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .btn-toggle.btn-ground { color: #95a5a6; border: 2px solid #ecf0f1; }
+        .btn-toggle.btn-ground:active { background: var(--ground-color); color: white; border-color: var(--ground-color); }
+        
+        .btn-reset-icon { font-size: 1.4rem; color: #e74c3c; }
+        .btn-reset-icon:hover { background: rgba(231, 76, 60, 0.1); }
+
+        .deck-label { font-size: 0.9rem; font-weight: 700; color: #666; white-space: nowrap; margin-right: 5px; }
+        .divider { width: 1px; height: 24px; background: #cbd5e0; margin: 0 2px; }
+
+        .btn-return {
+            width: 44px; height: 44px;
+            border-radius: 50%;
+            background: #fff;
+            color: #555;
+            display: flex; align-items: center; justify-content: center;
+            text-decoration: none;
+            font-size: 1.4rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: all 0.2s;
+        }
+        .btn-return:active { transform: scale(0.9); background: #f0f0f0; }
+
+        @media (max-width: 600px) {
+            .header-container h1 { font-size: 1rem; }
+            .header-btn span { display: none; }
+            .switch-capsule { padding: 4px 10px; gap: 5px; }
+            .deck-label { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1>
+            <img src="logo.jpg" alt="Logo" class="title-logo" onerror="this.style.display='none'">
+            <div>晟自然輔助系統　驗電器</div>
+        </h1>
+        <div class="nav-buttons">
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="header-btn">
+                <span>👉</span>加 LINE 提問
+            </a>       
+        </div>
+    </div>
+
+    <div id="sim-container">
+        <div class="instruction-tag" id="infoTag">步驟1：請拖曳帶電棒靠近驗電器</div>
+        <canvas id="simCanvas"></canvas>
+    </div>
+
+    <div class="controls">
+        <div class="controls-left">
+            <div class="switch-capsule">
+                <span class="deck-label">帶電棒</span>
+                <button class="btn-toggle active-neg" id="btnNeg" onclick="APP.setRod(-1)">－</button>
+                <button class="btn-toggle" id="btnPos" onclick="APP.setRod(1)">＋</button>
+                <div class="divider"></div>    
+                <button class="btn-toggle btn-ground" id="btnGround" onclick="APP.triggerGround()" title="接地 (觸發)">🖐</button>
+                <button class="btn-toggle" id="btnContact" onclick="APP.toggleContact()" disabled title="接觸 (需先靠近)">⚡</button>
+				<button class="btn-toggle btn-reset-icon" onclick="APP.hardReset()" title="重置">↺</button>				
+            </div>
+        </div>
+
+        <div class="controls-right">
+            <a href="index.html" class="btn-return" title="返回首頁">↩</a>
+        </div>
+    </div>
+
+    <script>
+    /**
+     * Project D Final v9.6: Dynamic Actor Correction
+     * 1. 修正電荷擴散時的視覺邏輯：不再強制鎖定質子位置。
+     * 2. 引入動態代理機制：物理運算由 Electron 變數統一處理，顯示層根據電荷極性動態分配。
+     * 3. 確保正/負電棒在接地後移開時，畫面上的電荷皆能正確從金屬盤流向金箔。
+     */
+    const APP = {
+        canvas: null, ctx: null, wrapper: null,
+        width: 0, height: 0, dpr: 1,
+
+        config: {
+            globalScale: 1.0,      
+            bottleSizeMult: 1.3,
+            rodSizeMult: 0.7,
+            pairCount: 100,     
+            particleRadius: 3.5,
+            maxLeafAngle: 2.3, 
+            leafLengthBase: 65,
+            railStart: {x:0, y:0},
+            railEnd: {x:0, y:0},
+            inductionLimit: 0 
+        },
+
+        rod: { x: 0, y: 0, charge: -1, dragging: false, angle: -Math.PI/4 },
+        electroscope: { x: 0, y: 0, leafAngle: 0, isGrounded: false },
+		contact: { active: false, done: false, type: 0, lastPos: {x:0, y:0} },
+        particlePairs: [],
+
+        init: function() {
+            this.wrapper = document.getElementById('sim-container');
+            this.canvas = document.getElementById('simCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.dpr = window.devicePixelRatio || 1;
+
+            const bind = (evts, handler) => evts.forEach(e => this.canvas.addEventListener(e, handler, {passive: false}));
+            bind(['mousedown', 'mousemove', 'mouseup', 'mouseleave'], e => this.handleMouse(e));
+            bind(['touchstart', 'touchmove', 'touchend'], e => this.handleTouch(e));
+
+            window.addEventListener('resize', () => this.resize());
+            this.resize();
+            this.initParticles();
+            this.hardReset();
+            this.loop();
+        },
+
+        resize: function() {
+            const rect = this.wrapper.getBoundingClientRect();
+            this.width = rect.width;
+            this.height = rect.height;
+            this.canvas.width = this.width * this.dpr;
+            this.canvas.height = this.height * this.dpr;
+            this.ctx.scale(this.dpr, this.dpr);
+
+            let baseScale = Math.min(this.width / 380, this.height / 600);
+            this.config.globalScale = baseScale;
+
+            this.electroscope.x = this.width / 2;
+            this.electroscope.y = this.height * 0.65;
+            
+            let s = baseScale * this.config.bottleSizeMult;
+            let plateY = this.electroscope.y - 140 * s;
+
+            this.config.railEnd = { x: this.electroscope.x + 80 * s, y: plateY - 45 * s };
+            this.config.railStart = { x: this.width * 0.92, y: this.height * 0.08 };
+
+            let rs = baseScale * this.config.rodSizeMult;
+            let startAngle = Math.atan2(plateY - this.config.railStart.y, this.electroscope.x - this.config.railStart.x);
+            let startTipX = this.config.railStart.x + Math.cos(startAngle) * 60 * rs;
+            let startTipY = this.config.railStart.y + Math.sin(startAngle) * 60 * rs;
+            this.config.inductionLimit = Math.hypot(startTipX - this.electroscope.x, startTipY - plateY) + 10;
+            
+            if (!this.rod.dragging) this.forceRodToStart();
+        },
+
+        initParticles: function() {
+            this.particlePairs = [];
+            let count = this.config.pairCount;
+            let goldenAngle = Math.PI * (3 - Math.sqrt(5));
+            this.plateSeats = [];
+            
+            for(let i=0; i<count; i++) {
+                let r = Math.sqrt((i + 0.5) / count); 
+                let theta = i * goldenAngle;
+                this.plateSeats.push({ x: r * Math.cos(theta), y: r * Math.sin(theta) });
+            }
+
+            for(let i=0; i<count; i++) {
+                this.particlePairs.push({
+                    id: i,
+                    seatIndex: i,
+                    leafLocalX: (Math.random() - 0.5), 
+                    leafLocalY: 0.1 + Math.random() * 0.85, 
+                    leafSide: (i % 2 === 0) ? 1 : -1, 
+                    electron: { x: 0, y: 0, alpha: 0 },
+                    proton: { x: 0, y: 0, alpha: 0 }
+                });
+            }
+        },
+
+        forceRodToStart: function() {
+            this.rod.x = this.config.railStart.x;
+            this.rod.y = this.config.railStart.y;
+            let s = this.config.globalScale * this.config.bottleSizeMult;
+            let plateY = this.electroscope.y - 140 * s;
+            this.rod.angle = Math.atan2(plateY - this.rod.y, this.electroscope.x - this.rod.x);
+        },
+
+        hardReset: function() {
+            // 1. 【新增】清除接觸相關的狀態 (修正失效的主因)
+            this.contact.active = false;
+            this.contact.hasContacted = false;
+            
+            // 2. 【新增】重置接觸按鈕的外觀
+            const btnContact = document.getElementById('btnContact');
+            if(btnContact) {
+                btnContact.classList.remove('active-contact');
+                // 重置時棒子會被移回起點，所以按鈕理應變回不可按的狀態
+                btnContact.disabled = true; 
+            }
+
+            // 3. 原本的重置邏輯 (保持不變)
+            this.electroscope.leafAngle = 0;
+            this.electroscope.isGrounded = false;
+            this.rod.dragging = false;
+            this.forceRodToStart();
+            
+            this.particlePairs.forEach(p => {
+                p.electron.alpha = 0;
+                p.proton.alpha = 0;
+            });
+            this.updateInfoTag(0);
+            
+            // 4. 強制重繪 (確保畫面立刻更新)
+            this.draw();
+        },
+
+        triggerGround: function() {
+            // 1. 計算目前的感應強度
+            let strength = this.calculateInductionStrength();
+
+            // 2. 【新增邏輯】放電模式 (Discharge Mode)
+            // 如果帶電棒離得很遠 (強度不足 0.3)，此時接地 = 導走電荷 = 重置
+            if (strength <= 0.3) {
+                this.hardReset(); // 直接呼叫重置函式，恢復電中性
+                return;
+            }
+
+            // 3. 感應模式 (Induction Mode)
+            // 如果已經在接地狀態，就不重複觸發
+            if (this.electroscope.isGrounded) return; 
+            
+            // 執行原本的感應接地邏輯
+            this.electroscope.isGrounded = true;
+            this.electroscope.leafAngle = 0; 
+            
+            this.trappedCount = Math.floor(this.config.pairCount * strength);
+
+            // 重置物理代理人位置 (防止閃爍)
+            let s = this.config.globalScale * this.config.bottleSizeMult;
+            let plateY = this.electroscope.y - 140 * s;
+            let cx = this.electroscope.x;
+
+            this.particlePairs.forEach(pair => {
+                let seat = this.plateSeats[pair.seatIndex % this.plateSeats.length];
+                let platePos = { x: cx + seat.x * 65 * s, y: plateY + seat.y * 10 * s };
+                
+                pair.electron.x = platePos.x;
+                pair.electron.y = platePos.y;
+            });
+        },
+
+        calculateInductionStrength: function() {
+            let s = this.config.globalScale * this.config.bottleSizeMult;
+            let plateY = this.electroscope.y - 140 * s;
+            let rs = this.config.globalScale * this.config.rodSizeMult;
+            let rodTipX = this.rod.x + Math.cos(this.rod.angle) * 60 * rs;
+            let rodTipY = this.rod.y + Math.sin(this.rod.angle) * 60 * rs;
+            
+            let dist = Math.hypot(rodTipX - this.electroscope.x, rodTipY - plateY);
+            let limit = this.config.inductionLimit;
+            let distToStart = Math.hypot(this.rod.x - this.config.railStart.x, this.rod.y - this.config.railStart.y);
+            
+            if (distToStart < 40 * s) return 0;
+            if (dist < limit) {
+                let raw = 1 - (dist / limit);
+                return Math.pow(raw, 2.5); 
+            }
+            return 0;
+        },
+
+        update: function() {
+            let strength = this.calculateInductionStrength();
+            
+            this.updateContactBtn(); 
+
+            let targetAngle = 0;
+            
+            // 【修正重點】定義物理極限角度
+            // 原本的 2.3 (約130度) 太大了，會導致金箔翻過去
+            // 我們改用 1.4 (約80度)，這是讓金箔張開到接近水平的合理極限
+            const limitAngle = 1.4; 
+
+            // === 金箔角度計算邏輯 ===
+
+            // 1. 接觸吸附中 (最大張角)
+            if (this.contact.active) {
+                targetAngle = limitAngle;
+            } 
+            // 2. 接觸後斷開 (維持張角)
+            else if (this.contact.hasContacted) {
+                // 讓張角在 80% ~ 100% 之間浮動
+                targetAngle = (0.8 + 0.2 * strength) * limitAngle;
+            }
+            // 3. 接地狀態 (歸零)
+            else if (this.electroscope.isGrounded) {
+                if (strength > 0.2) {
+                    targetAngle = 0; 
+                } else {
+                    let progress = (0.2 - strength) / 0.2;
+                    progress = Math.max(0, Math.min(1, progress));
+                    let ratio = (this.trappedCount || 0) / this.config.pairCount;
+                    // 這裡也套用 limitAngle 確保一致性
+                    let finalAngle = limitAngle * ratio * 0.6;
+                    targetAngle = finalAngle * progress; 
+                }
+            } 
+            // 4. 一般感應
+            else {
+                // 套用限制，確保感應時也不會穿模
+                targetAngle = strength * limitAngle;
+            }
+            
+            // 動畫平滑化
+            this.electroscope.leafAngle += (targetAngle - this.electroscope.leafAngle) * 0.3; 
+            if (Math.abs(this.electroscope.leafAngle) < 0.001) this.electroscope.leafAngle = 0;
+
+            this.updateParticles(strength);
+            this.updateInfoTag(strength);
+        },
+
+        // ============================================
+        // 修正版 v15: 接觸的中和與擴散
+        // ============================================
+        updateParticles: function(strength) {
+            let s = this.config.globalScale * this.config.bottleSizeMult;
+            let cx = this.electroscope.x;
+            let cy = this.electroscope.y;
+            let plateY = cy - 140 * s; 
+            let pivotY = cy + 60 * s; 
+            let leafL = this.config.leafLengthBase * s; 
+            let leafW = 6 * s;
+
+            // --- 座標計算輔助 ---
+            const getPlatePos = (pair) => {
+                let seat = this.plateSeats[pair.seatIndex % this.plateSeats.length];
+                return { x: cx + seat.x * 65 * s, y: plateY + seat.y * 10 * s };
+            };
+            const getLeafPos = (pair) => {
+                let angleVal = this.electroscope.leafAngle; 
+                if(this.electroscope.isGrounded && angleVal < 0.1) angleVal = 0.1;
+
+                let localX = (pair.leafSide===-1) ? (pair.leafLocalX-0.5)*leafW : (pair.leafLocalX+0.5)*leafW;
+                let localY = leafL * pair.leafLocalY;
+                let angle = (pair.leafSide===-1) ? -angleVal : angleVal;
+                return { 
+                    x: cx + (localX*Math.cos(angle) - localY*Math.sin(angle)), 
+                    y: pivotY + (localX*Math.sin(angle) + localY*Math.cos(angle)) 
+                };
+            };
+
+            let isNegRod = (this.rod.charge < 0);
+            
+            // === 【修改重點】動態強度計算 ===
+            
+            // 1. 如果正在接觸中 (Active Contact)
+            // 物理意義：強勢電源注入，全功率輸出
+            if (this.contact.active) {
+                strength = 1.0; 
+                this.contact.hasContacted = true; 
+            } 
+            // 2. 如果接觸後斷開 (Has Contacted)
+            // 物理意義：保有基礎電荷，並隨距離產生感應增減 (呼吸效果)
+            else if (this.contact.hasContacted) {
+                // 公式：基礎電荷 0.6 + 感應加成 (0.4 * 當前距離強度)
+                // 這樣遠離時至少還有 0.6 (不會歸零)，靠近時會變回 1.0
+                strength = 0.6 + 0.4 * strength;
+            }
+            // 3. 如果只是單純感應 (未接觸、未接地)
+            // 保持原本傳進來的 strength (0~1) 不變
+
+            // 計算活躍粒子數
+            let activeCount = Math.floor(this.config.pairCount * strength);
+            if (this.electroscope.isGrounded) {
+                activeCount = (this.trappedCount !== undefined) ? this.trappedCount : activeCount;
+            }
+
+            this.particlePairs.forEach((pair, i) => {
+                // 1. 隱藏非活躍粒子 & 設定正確起跑點
+                if (i >= activeCount) {
+                    pair.proton.alpha = 0; pair.electron.alpha = 0;
+                    
+                    let startPos;
+
+                    // 【關鍵修正】
+                    // 判斷條件加入 this.contact.hasContacted
+                    // 只要是「接觸中」或是「帶電狀態」，粒子變化的源頭一律視為「金屬盤」
+                    // 這樣當棒子靠近時，電荷看起來會是被「從盤子往下擠壓」的 (排斥效果)
+                    if (this.contact.active || this.contact.hasContacted) {
+                        startPos = getPlatePos(pair); 
+                    } else {
+                        // 只有在純感應模式(未接觸)下，才區分正負棒的起始點
+                        startPos = isNegRod ? getPlatePos(pair) : getLeafPos(pair);
+                    }
+                    
+                    pair.electron.x = startPos.x; 
+                    pair.electron.y = startPos.y; 
+                    return;
+                }
+
+                // 2. 計算目標位置
+                let p = pair.electron;
+                let platePos = getPlatePos(pair);
+                let leafPos = getLeafPos(pair);
+                let targetPos = {x: 0, y: 0};
+
+                if (this.contact.active || this.contact.hasContacted) {
+                    // 接觸模式：分組均勻擴散
+                    let groupIndex = i % 4;
+                    let goToPlate = (groupIndex < 2); 
+                    targetPos = goToPlate ? platePos : leafPos;
+
+                } else if (this.electroscope.isGrounded) {
+                    // 接地模式
+                    const releaseStart = 0.2;
+                    if (strength >= releaseStart) {
+                        targetPos = platePos;
+                        if (Math.hypot(p.x - platePos.x, p.y - platePos.y) > 100 * s) {
+                             p.x = platePos.x; p.y = platePos.y;
+                        }
+                    } else {
+                        let progress = (releaseStart - strength) / releaseStart;
+                        progress = Math.max(0, Math.min(1, progress));
+                        let isDestinedForLeaf = (i % 3 !== 0);
+                        let myTurn = (i / activeCount) < progress;
+                        if (isDestinedForLeaf && myTurn) targetPos = leafPos; 
+                        else targetPos = platePos; 
+                    }
+                } else {
+                    // 一般感應模式
+                    if (isNegRod) targetPos = leafPos; 
+                    else targetPos = platePos;         
+                }
+
+                // 3. 物理移動 (Lane Logic)
+                let laneOffset = ((pair.id % 5) - 2) * 1.5 * s;
+                let laneX = cx + laneOffset;
+                let rodTopY = plateY;
+                let rodBottomY = pivotY;
+                let goingDown = (targetPos.y > p.y + 10*s);
+                let goingUp = (targetPos.y < p.y - 10*s);
+                let nextX = p.x, nextY = p.y;
+
+                if (goingDown) {
+                    if (p.y < rodTopY + 5*s) { 
+                        nextX = laneX; 
+                        nextY = (Math.abs(p.x - cx) > 3.5 * s) ? rodTopY + 2 * s : p.y + 10*s; 
+                        if (nextY > rodBottomY) nextY = rodBottomY;
+                    } else if (p.y < rodBottomY - 5*s) {
+                        nextX = laneX; nextY = rodBottomY;
+                    } else {
+                        nextX = targetPos.x; nextY = targetPos.y;
+                    }
+                } else if (goingUp) {
+                    if (p.y > rodBottomY - 5*s) {
+                        nextX = laneX; nextY = rodBottomY - 15*s; 
+                    } else if (p.y > rodTopY + 5*s) {
+                        nextX = laneX; nextY = rodTopY; 
+                    } else {
+                        nextX = targetPos.x; nextY = targetPos.y;
+                    }
+                } else {
+                    nextX = targetPos.x; nextY = targetPos.y;
+                }
+
+                p.x += (nextX - p.x) * 0.25; 
+                p.y += (nextY - p.y) * 0.25;
+
+                // 4. 視覺渲染 (Visual Rendering) - 【修改重點】
+                if (this.contact.active || this.contact.hasContacted) {
+                    let showColor, hideColor;
+                    if (isNegRod) {
+                        showColor = 'electron'; hideColor = 'proton'; // 棒負 -> 顯電子
+                    } else {
+                        showColor = 'proton'; hideColor = 'electron'; // 棒正 -> 顯質子
+                    }
+
+                    // A. 顯示色 (Show Color)
+                    pair[showColor].x = p.x; 
+                    pair[showColor].y = p.y;
+                    // 平滑淡入 (Lerp): 從目前的 alpha 慢慢加到 1
+                    pair[showColor].alpha += (1.0 - pair[showColor].alpha) * 0.2; 
+
+                    // B. 隱藏色 (Hide Color) - 【交錯淡化核心】
+                    // 不要直接設為 0，而是慢慢減小 (Decay)
+                    // 並且：將它們「釘」在金屬盤原本的位置，不要讓它們跟著 p 跑
+                    if (pair[hideColor].alpha > 0.01) {
+                        pair[hideColor].alpha -= 0.1; // 每幀減少 10% 透明度 (約 10 幀消失)
+                        
+                        // 只有原本在盤子上的那些(異性電)需要釘住，避免跳動
+                        // 金箔上的本來就沒變色，所以沒差
+                        if (i % 4 < 2) { 
+                             pair[hideColor].x = platePos.x;
+                             pair[hideColor].y = platePos.y;
+                        } else {
+                             // 金箔的可以直接隱藏，因為它們位置本來就重疊
+                             pair[hideColor].x = p.x;
+                             pair[hideColor].y = p.y;
+                        }
+                    } else {
+                        pair[hideColor].alpha = 0;
+                    }
+
+                } else if (this.electroscope.isGrounded) {
+                    // 接地模式渲染
+                    let showColor = isNegRod ? 'proton' : 'electron';
+                    let hideColor = isNegRod ? 'electron' : 'proton';
+                    pair[showColor].x = p.x; pair[showColor].y = p.y;
+                    pair[showColor].alpha = 1.0; pair[hideColor].alpha = 0;
+                } else {
+                    // 一般感應模式渲染
+                    let fade = Math.min(1, strength * 8);
+                    if (isNegRod) {
+                        pair.proton.x = platePos.x; pair.proton.y = platePos.y; 
+                        pair.electron.x = p.x; pair.electron.y = p.y; 
+                    } else {
+                        pair.electron.x = p.x; pair.electron.y = p.y;
+                        pair.proton.x = leafPos.x; pair.proton.y = leafPos.y;
+                    }
+                    pair.proton.alpha = fade;
+                    pair.electron.alpha = fade;
+                }
+            });
+        },
+
+        updateInfoTag: function(strength) {
+            const tag = document.getElementById('infoTag');
+            let msg = "";
+            let cls = "instruction-tag";
+            
+            if (this.electroscope.isGrounded) {
+                if (strength > 0.2) {
+                    msg = "步驟3：請移開帶電棒";
+                    cls += " highlight";
+                } else {
+                    // === 修改這裡 ===
+                    let cType = this.rod.charge < 0 ? "正" : "負"; 
+                    // 在結果後方加上操作引導，讓使用者知道新的功能
+                    msg = `實驗完成：帶${cType}電 (再次點擊接地歸零)`;
+                    cls += " success";
+                }
+            } else {
+                // ... (下方邏輯保持不變)
+                if (strength > 0.3) {
+                    msg = "步驟2：點擊「接地」";
+                    cls += " highlight";
+                } else {
+                    msg = "步驟1：請拖曳帶電棒靠近金屬盤";
+                }
+            }
+            if(tag.innerText !== msg) tag.innerText = msg;
+            tag.className = cls;
+        },
+		
+		// 用來控制接觸按鈕的亮/滅
+        updateContactBtn: function() {
+            const btn = document.getElementById('btnContact');
+            
+            // 1. 如果已經在接觸狀態(吸附中)，按鈕保持開啟
+            if (this.contact.active) {
+                btn.disabled = false;
+                return;
+            }
+
+            // 2. 直接檢查座標：電棒是否已經到了軌道的終點 (railEnd)？
+            // 我們允許 2 像素的微小誤差，確保拖到底時一定能觸發
+            let dx = this.rod.x - this.config.railEnd.x;
+            let dy = this.rod.y - this.config.railEnd.y;
+            let distToLimit = Math.hypot(dx, dy);
+
+            // 3. 判定：距離小於 2px (代表已經貼在極限位置了) 且 未接地
+            let isAtLimit = (distToLimit < 2);
+            
+            if (isAtLimit && !this.electroscope.isGrounded) {
+                btn.disabled = false;
+                // 記錄此刻的位置，這就是最完美的「最近位置」
+                this.contact.lastValidPos = { x: this.rod.x, y: this.rod.y };
+            } else {
+                btn.disabled = true;
+            }
+        },
+
+        // 先補上這個空函式，防止點擊時報錯
+        toggleContact: function() {
+            const btn = document.getElementById('btnContact');
+            
+            if (!this.contact.active) {
+                // === 動作：吸附 (ON) ===
+                this.contact.active = true;
+                btn.classList.add('active-contact');
+                
+                let s = this.config.globalScale * this.config.bottleSizeMult;
+                let plateY = this.electroscope.y - 140 * s;
+                
+                // 1. 設定棒子吸附位置
+                this.rod.x = this.electroscope.x + 70 * s;
+                this.rod.y = plateY - 10 * s; 
+                
+                // 2. 電荷注入特效
+                let isNegRod = (this.rod.charge < 0);
+                
+                this.particlePairs.forEach((pair, i) => {
+                    let groupIndex = i % 4;
+                    let isPlateGroup = (groupIndex < 2);
+
+                    if (isPlateGroup) {
+                        // 【關鍵修正】
+                        // 不管是顯示紅球還是藍球，負責運算的「物理本體 (pair.electron)」
+                        // 必須強制瞬移到棒子尖端，這樣路徑運算才會從上往下算！
+                        pair.electron.x = this.rod.x;
+                        pair.electron.y = this.rod.y;
+
+                        // 視覺替身也要一起去，避免閃爍
+                        pair.proton.x = this.rod.x;
+                        pair.proton.y = this.rod.y;
+                        
+                        // 處理透明度
+                        let showColor = isNegRod ? 'electron' : 'proton';
+                        pair[showColor].alpha = 1.0; 
+                    }
+                });
+
+            } else {
+                // === 動作：彈回 (OFF) ===
+                this.contact.active = false;
+                btn.classList.remove('active-contact');
+                
+                if (this.contact.lastValidPos) {
+                    this.rod.x = this.contact.lastValidPos.x;
+                    this.rod.y = this.contact.lastValidPos.y;
+                    
+                    let s = this.config.globalScale * this.config.bottleSizeMult;
+                    let plateY = this.electroscope.y - 140 * s;
+                    this.rod.angle = Math.atan2(plateY - this.rod.y, this.electroscope.x - this.rod.x);
+                }
+            }
+            
+            this.draw();
+        },
+
+        draw: function() {
+            this.ctx.clearRect(0, 0, this.width, this.height);
+            let sBottle = this.config.globalScale * this.config.bottleSizeMult;
+            let sRod = this.config.globalScale * this.config.rodSizeMult;
+            
+            this.drawElectroscope(sBottle);
+            this.drawParticles(sBottle);
+            this.drawRod(sRod);
+        },
+
+        drawElectroscope: function(s) {
+            let ctx = this.ctx;
+            let cx = this.electroscope.x;
+            let cy = this.electroscope.y;
+
+            let bottleTopW = 70 * s;
+            let bottleBaseW = 200 * s;
+            let bottleNeckH = 60 * s;
+            let bottleBodyH = 200 * s;
+            
+            let plateY = cy - 140 * s;
+            let bottleTopY = cy - 100 * s; 
+            let bottleBottomY = bottleTopY + bottleNeckH + bottleBodyH;
+
+            // 瓶身
+            ctx.beginPath();
+            ctx.moveTo(cx - bottleTopW / 2, bottleTopY);
+            ctx.lineTo(cx - bottleTopW / 2, bottleTopY + bottleNeckH);
+            ctx.quadraticCurveTo(cx - bottleTopW / 2, bottleTopY + bottleNeckH + 30 * s, cx - bottleBaseW / 2, bottleBottomY - 20 * s);
+            ctx.quadraticCurveTo(cx - bottleBaseW / 2, bottleBottomY, cx, bottleBottomY);
+            ctx.quadraticCurveTo(cx + bottleBaseW / 2, bottleBottomY, cx + bottleBaseW / 2, bottleBottomY - 20 * s);
+            ctx.quadraticCurveTo(cx + bottleTopW / 2, bottleTopY + bottleNeckH + 30 * s, cx + bottleTopW / 2, bottleTopY + bottleNeckH);
+            ctx.lineTo(cx + bottleTopW / 2, bottleTopY);
+            ctx.closePath();
+            ctx.fillStyle = "rgba(220, 245, 255, 0.3)"; ctx.fill();
+            ctx.lineWidth = 2 * s; ctx.strokeStyle = "rgba(100, 120, 140, 0.8)"; ctx.stroke();
+
+            // 橡皮塞
+            ctx.fillStyle = "#34495e";
+            ctx.beginPath(); ctx.rect(cx - bottleTopW/2 - 2*s, bottleTopY - 10*s, bottleTopW + 4*s, 15*s); ctx.fill();
+
+            // 金屬桿
+            let rodBottomY = cy + 60 * s; 
+            ctx.fillStyle = "#bdc3c7";
+            ctx.fillRect(cx - 4 * s, plateY, 8 * s, rodBottomY - plateY);
+
+            // 金屬盤
+            ctx.beginPath(); ctx.ellipse(cx, plateY, 60 * s, 10 * s, 0, 0, Math.PI * 2);
+            ctx.fillStyle = "#95a5a6"; ctx.fill();
+            ctx.lineWidth = 1 * s; ctx.strokeStyle = "#7f8c8d"; ctx.stroke();
+
+            // 金箔
+            let angle = this.electroscope.leafAngle;
+            let leafL = this.config.leafLengthBase * s; 
+            let leafW = 6 * s;
+            
+            ctx.save();
+            ctx.translate(cx, rodBottomY);
+            ctx.save(); ctx.rotate(-angle); ctx.fillStyle = "#f1c40f"; ctx.fillRect(-leafW, 0, leafW, leafL); ctx.restore();
+            ctx.save(); ctx.rotate(angle); ctx.fillStyle = "#f1c40f"; ctx.fillRect(0, 0, leafW, leafL); ctx.restore();
+            ctx.restore();
+        },
+
+        drawParticles: function(s) {
+            let r = this.config.particleRadius * s;
+
+            this.particlePairs.forEach(pair => {
+                if (pair.proton.alpha > 0.05) {
+                    this.ctx.globalAlpha = pair.proton.alpha;
+                    this.drawOneParticle(pair.proton.x, pair.proton.y, r, '#e74c3c', '+');
+                }
+                if (pair.electron.alpha > 0.05) {
+                    this.ctx.globalAlpha = pair.electron.alpha;
+                    this.drawOneParticle(pair.electron.x, pair.electron.y, r, '#3498db', '-');
+                }
+            });
+            this.ctx.globalAlpha = 1.0;
+        },
+
+        drawOneParticle: function(x, y, r, color, sym) {
+            this.ctx.beginPath(); 
+            this.ctx.arc(x, y, r, 0, Math.PI*2);
+            this.ctx.fillStyle = "white"; 
+            this.ctx.fill();
+            this.ctx.strokeStyle = color; 
+            this.ctx.lineWidth = 1.5; 
+            this.ctx.stroke();
+            if (r > 3) {
+                this.ctx.fillStyle = color; 
+                this.ctx.font = `bold ${r*1.5}px Arial`;
+                this.ctx.textAlign = "center"; 
+                this.ctx.textBaseline = "middle"; 
+                this.ctx.fillText(sym, x, y+1);
+            }
+        },
+
+        drawRod: function(s) {
+            this.ctx.save();
+            this.ctx.translate(this.rod.x, this.rod.y);
+            this.ctx.rotate(this.rod.angle);
+            
+            let L = 130 * s; 
+            let W = 36 * s;
+            let color = this.rod.charge < 0 ? '#3498db' : '#e74c3c';
+            let sym = this.rod.charge < 0 ? "-" : "+";
+
+            this.ctx.fillStyle = "#34495e";
+            this.ctx.fillRect(-L/2, -W/2, L, W);
+
+            let headX = L/2 - W/2;
+            let headR = W * 0.85;
+            this.ctx.beginPath(); 
+            this.ctx.arc(headX, 0, headR, 0, Math.PI*2);
+            this.ctx.fillStyle = "#fff"; this.ctx.fill();
+            this.ctx.lineWidth = 4; this.ctx.strokeStyle = color; this.ctx.stroke();
+            
+            this.ctx.fillStyle = color; 
+            this.ctx.font = "bold 24px Arial";
+            this.ctx.textAlign = "center"; 
+            this.ctx.textBaseline = "middle";
+            this.ctx.fillText(sym, headX, 2);
+            
+            this.ctx.restore();
+        },
+
+        setRod: function(c) {
+            this.rod.charge = c;
+            this.hardReset(); 
+            document.getElementById('btnNeg').className = c===-1 ? 'btn-toggle active-neg' : 'btn-toggle';
+            document.getElementById('btnPos').className = c===1 ? 'btn-toggle active-pos' : 'btn-toggle';
+        },
+
+        handleMouse: function(e) { e.type==='mousedown'?this.startDrag(e):e.type==='mousemove'?this.drag(e):this.endDrag(); },
+        handleTouch: function(e) { e.preventDefault(); e.type==='touchstart'?this.startDrag(e):e.type==='touchmove'?this.drag(e):this.endDrag(); },
+        getPos: function(e) {
+            const rect = this.canvas.getBoundingClientRect();
+            let cx = e.touches ? e.touches[0].clientX : e.clientX;
+            let cy = e.touches ? e.touches[0].clientY : e.clientY;
+            return {x: cx - rect.left, y: cy - rect.top};
+        },
+        startDrag: function(e) {
+            let p = this.getPos(e);
+            let dist = Math.hypot(p.x - this.rod.x, p.y - this.rod.y);
+            if(dist < 200) this.rod.dragging = true;
+            if(this.rod.dragging) this.drag(e);
+        },
+        drag: function(e) {
+            if (this.contact.active) return;
+			if(!this.rod.dragging) return;
+            let p = this.getPos(e);
+            let A = this.config.railStart;
+            let B = this.config.railEnd;
+            let P = p;
+            let abX = B.x - A.x; let abY = B.y - A.y;
+            let apX = P.x - A.x; let apY = P.y - A.y;
+            let t = (apX*abX + apY*abY) / (abX*abX + abY*abY);
+            t = Math.max(0, Math.min(1, t));
+            this.rod.x = A.x + abX * t;
+            this.rod.y = A.y + abY * t;
+            let s = this.config.globalScale * this.config.bottleSizeMult;
+            let plateY = this.electroscope.y - 140 * s;
+            this.rod.angle = Math.atan2(plateY - this.rod.y, this.electroscope.x - this.rod.x);
+        },
+        endDrag: function() { this.rod.dragging = false; },
+        loop: function() { this.update(); this.draw(); requestAnimationFrame(() => this.loop()); }
+    };
+    window.onload = () => APP.init();
+    </script>
+</body>
+</html>
