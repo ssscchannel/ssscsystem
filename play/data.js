@@ -1,5 +1,4 @@
 const GAME_DB = {
-{
     "banks": [
         {
             "id": "G3_種菜",
