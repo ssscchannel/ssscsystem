@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>晟自然輔助系統　抽籤小幫手</title>
+    
+    <style>
+        /* =========================================
+           1. 晟自然系統標準樣式
+           ========================================= */
+        * { box-sizing: border-box; }
+        
+        html, body {
+            margin: 0; padding: 0; width: 100%; height: 100dvh;
+            overflow: hidden;
+            background-color: #000;
+            background-image: url('page.jpg');
+            background-size: cover; background-position: center;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            color: #fff;
+        }
+
+        /* =========================================
+           2. 縮放容器
+           ========================================= */
+        #scale-wrapper {
+            width: 500px;
+            height: 100%;
+            transform-origin: top left;
+            overflow-y: auto;
+            overflow-x: hidden;
+            background: rgba(0, 0, 0, 0.4);
+            display: flex; flex-direction: column;
+        }
+
+        #scale-wrapper::-webkit-scrollbar { width: 4px; }
+        #scale-wrapper::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 2px; }
+
+        /* =========================================
+           3. 介面元件
+           ========================================= */
+        header {
+            background: rgba(20, 20, 35, 0.9);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding: 12px;
+            text-align: center;
+            flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        
+        header img.logo { height: 28px; margin-right: 10px; border-radius: 4px; }
+        header h1 { margin: 0; font-size: 1.1rem; color: #fff; letter-spacing: 1px; }
+
+        /* 模式切換按鈕區 */
+        .mode-tabs {
+            display: flex;
+            background: rgba(0,0,0,0.5);
+            padding: 10px 10px 0 10px;
+            gap: 5px;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 10px 0;
+            background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            color: #aaa;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-btn.active {
+            background: rgba(0, 150, 255, 0.2);
+            color: #fff;
+            font-weight: bold;
+            border-color: #0096ff;
+            box-shadow: 0 -2px 10px rgba(0, 150, 255, 0.2);
+        }
+
+        /* 內容區 */
+        main { 
+            padding: 20px; 
+            flex-grow: 1; 
+            position: relative; 
+            display: flex; flex-direction: column; 
+        }
+
+        section {
+            display: none;
+            background: rgba(30, 30, 40, 0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 0 0 12px 12px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: fadeIn 0.3s ease-out;
+            margin-top: -1px;
+        }
+
+        section.active {
+            display: block;
+            border-top: 1px solid #0096ff;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .control-group { margin-bottom: 15px; display: flex; align-items: center; justify-content: space-between; }
+        label { color: #ccc; font-size: 0.95rem; }
+
+        /* 輸入與選單樣式 */
+        input[type="number"], input[type="text"], textarea, select {
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #555;
+            color: #fff;
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-family: 'Microsoft JhengHei', sans-serif;
+            outline: none;
+        }
+        
+        input[type="number"] { width: 80px; text-align: center; }
+        
+        select {
+            width: 80px;
+            text-align: center;
+            cursor: pointer;
+            appearance: none;
+            -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%230096ff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 10px top 50%;
+            background-size: 10px auto;
+            padding-right: 25px;
+        }
+        
+        option { background: #222; color: #fff; }
+
+        textarea { width: 100%; height: 120px; margin-top: 10px; resize: none; }
+        
+        /* 按鈕樣式 */
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #0096ff, #0055ff);
+            border: none; border-radius: 25px;
+            color: #fff; font-size: 1.1rem; font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0, 100, 255, 0.3);
+            margin-top: 15px;
+        }
+        .action-btn:active { transform: scale(0.98); }
+
+        .btn-small {
+            border: none; border-radius: 6px;
+            color: #fff; font-size: 0.9rem; padding: 5px 12px;
+            cursor: pointer; height: 38px;
+            transition: opacity 0.2s;
+        }
+        .btn-small:active { transform: scale(0.95); }
+
+        .btn-reset {
+            background: linear-gradient(135deg, #ff5e5e, #d63030);
+            box-shadow: 0 2px 5px rgba(255, 50, 50, 0.3);
+        }
+        
+        .btn-toggle {
+            background: rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            font-size: 0.8rem;
+            height: 30px; padding: 0 10px;
+        }
+
+        /* 結果顯示區 (統一置中) */
+        .result-box {
+            margin-top: 20px; padding: 15px;
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            border: 1px dashed rgba(255,255,255,0.2);
+            display: block; width: 100%;
+            max-height: 400px; overflow-y: auto;
+            text-align: center; /* 關鍵：統一置中 */
+        }
+        .result-box::-webkit-scrollbar { width: 6px; }
+        .result-box::-webkit-scrollbar-thumb { background: rgba(0, 150, 255, 0.3); border-radius: 3px; }
+        
+        .result-placeholder {
+            display: block; padding-top: 15px;
+            color: #00ffcc; font-weight: bold; font-size: 1.2rem;
+            text-shadow: 0 0 8px rgba(0, 255, 204, 0.3);
+        }
+
+        .history-item {
+            display: block; width: 100%; padding: 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            color: #888; font-size: 0.95rem;
+            transition: all 0.5s; word-break: break-all;
+        }
+
+        .history-item:first-child {
+            color: #00ffcc; font-size: 1.5rem; font-weight: bold;
+            text-shadow: 0 0 15px rgba(0,255,204,0.6);
+            background: rgba(0, 150, 255, 0.15);
+            border-radius: 8px; border-bottom: none;
+            margin-bottom: 10px; padding: 15px;
+            animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        #list-container { transition: all 0.3s ease; overflow: hidden; }
+
+        footer { text-align: center; color: #555; font-size: 0.8rem; padding: 10px; margin-top: auto;}
+
+    </style>
+</head>
+<body>
+
+    <div id="scale-wrapper">
+        
+        <header>
+            <img src="logo.jpg" alt="Logo" class="logo">
+            <h1>晟自然輔助系統　抽籤小幫手</h1>
+        </header>
+
+        <nav class="mode-tabs">
+            <button class="tab-btn active" onclick="switchSection(1)">數字抽籤</button>
+            <button class="tab-btn" onclick="switchSection(2)">隨機分組</button>
+            <button class="tab-btn" onclick="switchSection(3)">名單抽籤</button>
+        </nav>
+
+        <main>
+            <section id="section-number" class="active">
+                <div class="control-group">
+                    <label>最小值</label>
+                    <input type="number" id="m1-min" value="1"> 
+                </div>
+                <div class="control-group">
+                    <label>最大值</label>
+                    <input type="number" id="m1-max" value="40">
+                </div>
+                <div class="control-group">
+                    <label>抽出數量</label>
+                    <select id="m1-count">
+                        <option value="1" selected>1</option>
+                        <option value="2">2</option>
+                        <option value="3">3</option>
+                        <option value="4">4</option>
+                        <option value="5">5</option>
+                        <option value="6">6</option>
+                        <option value="7">7</option>
+                        <option value="8">8</option>
+                        <option value="9">9</option>
+                        <option value="10">10</option>
+                    </select>
+                </div>
+                <div class="control-group" style="justify-content: flex-start; gap: 10px;">
+                    <input type="checkbox" id="m1-repeat">
+                    <label for="m1-repeat">允許重複抽出</label>
+                </div>
+                <button class="action-btn" onclick="runMode1()">開始抽籤</button>
+                <div id="result-1" class="result-box"><span class="result-placeholder">準備就緒</span></div>
+            </section>
+
+            <section id="section-group">
+                <div class="control-group">
+                    <label>總人數 (1~N)</label>
+                    <input type="number" id="m2-total" value="30">
+                </div>
+                <div class="control-group">
+                    <label>每組人數</label>
+                    <input type="number" id="m2-size" value="6">
+                </div>
+                <button class="action-btn" onclick="runMode2()">開始分組</button>
+                <div id="result-2" class="result-box">
+                    <span class="result-placeholder">準備就緒</span>
+                </div>
+            </section>
+
+            <section id="section-list">
+                
+                <div class="control-group" style="margin-bottom: 5px;">
+                    <label>抽籤名單</label>
+                    <button id="btn-toggle-list" class="btn-small btn-toggle" onclick="toggleList()">隱藏名單</button>
+                </div>
+
+                <div id="list-container">
+                    <textarea id="m3-list" placeholder="請在此貼上名單，一行一個名字..."></textarea>
+                </div>
+                
+                <div class="control-group" style="margin-top:15px;">
+                    <label>抽出人數</label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <select id="m3-count">
+                            <option value="1" selected>1</option>
+                            <option value="2">2</option>
+                            <option value="3">3</option>
+                            <option value="4">4</option>
+                            <option value="5">5</option>
+                        </select>
+                        <button class="btn-small btn-reset" onclick="resetMode3()">重置結果</button>
+                    </div>
+                </div>
+
+                <button class="action-btn" onclick="runMode3()">開始抽籤</button>
+                
+                <div id="result-3" class="result-box">
+                    <span class="result-placeholder">準備就緒</span>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            晟自然輔助系統 v2.7
+        </footer>
+    </div>
+
+    <script>
+        // =========================================
+        // 1. 視窗適配引擎
+        // =========================================
+        function autoFitSimulation() {
+            const logicalWidth = 500; 
+            const wrapper = document.getElementById('scale-wrapper');
+            const screenWidth = window.innerWidth;
+            const screenHeight = window.innerHeight;
+            let scale = screenWidth < logicalWidth ? screenWidth / logicalWidth : 1;
+            
+            if (wrapper) {
+                wrapper.style.transform = `scale(${scale})`;
+                wrapper.style.width = `${logicalWidth}px`;
+                wrapper.style.height = `${screenHeight / scale}px`;
+            }
+        }
+        window.addEventListener('load', autoFitSimulation);
+        window.addEventListener('resize', autoFitSimulation);
+
+        // =========================================
+        // 2. 名單儲存與折疊功能
+        // =========================================
+        const STORAGE_KEY = 'chen_nature_lottery_list';
+        const listInput = document.getElementById('m3-list');
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedList = localStorage.getItem(STORAGE_KEY);
+            if (savedList) listInput.value = savedList;
+        });
+
+        listInput.addEventListener('input', () => {
+            localStorage.setItem(STORAGE_KEY, listInput.value);
+        });
+
+        function toggleList() {
+            const container = document.getElementById('list-container');
+            const btn = document.getElementById('btn-toggle-list');
+            
+            if (container.style.display === 'none') {
+                container.style.display = 'block';
+                btn.textContent = '隱藏名單';
+            } else {
+                container.style.display = 'none';
+                btn.textContent = '展開名單';
+            }
+        }
+
+        // =========================================
+        // 3. 介面切換
+        // =========================================
+        function switchSection(mode) {
+            document.querySelectorAll('.tab-btn').forEach((btn, idx) => {
+                btn.classList.toggle('active', idx + 1 === mode);
+            });
+            const sections = [
+                document.getElementById('section-number'),
+                document.getElementById('section-group'),
+                document.getElementById('section-list')
+            ];
+            sections.forEach((sec, idx) => {
+                if (sec) sec.classList.toggle('active', idx + 1 === mode);
+            });
+        }
+
+        // =========================================
+        // 4. 抽籤邏輯
+        // =========================================
+
+        function showResultWithEffect(elementId, text) {
+            const el = document.getElementById(elementId);
+            el.innerHTML = `<span class="result-placeholder">${text.replace(/\n/g, '<br>')}</span>`;
+        }
+
+        function runMode1() {
+            const min = parseInt(document.getElementById('m1-min').value);
+            const max = parseInt(document.getElementById('m1-max').value);
+            const count = parseInt(document.getElementById('m1-count').value);
+            const allowRepeat = document.getElementById('m1-repeat').checked;
+
+            if (isNaN(min) || isNaN(max) || isNaN(count)) return showResultWithEffect('result-1', "輸入錯誤");
+            if (min > max) return showResultWithEffect('result-1', "最小值 > 最大值");
+
+            let result = [];
+            if (allowRepeat) {
+                for (let i = 0; i < count; i++) result.push(Math.floor(Math.random() * (max - min + 1)) + min);
+            } else {
+                if (count > (max - min + 1)) return showResultWithEffect('result-1', "數字不夠抽");
+                let pool = [];
+                for (let i = min; i <= max; i++) pool.push(i);
+                for (let i = 0; i < count; i++) {
+                    const idx = Math.floor(Math.random() * pool.length);
+                    result.push(pool[idx]);
+                    pool.splice(idx, 1);
+                }
+            }
+            showResultWithEffect('result-1', result.join(", "));
+        }
+
+        function runMode2() {
+            const total = parseInt(document.getElementById('m2-total').value);
+            const size = parseInt(document.getElementById('m2-size').value);
+
+            if (isNaN(total) || isNaN(size) || total <= 0) return showResultWithEffect('result-2', "輸入錯誤");
+            if (size > total) return showResultWithEffect('result-2', "每組人數 > 總人數");
+
+            let pool = [];
+            for (let i = 1; i <= total; i++) pool.push(i);
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            let groups = [];
+            let groupId = 1;
+            while (pool.length >= size) {
+                groups.push({ id: groupId++, members: pool.splice(0, size) });
+            }
+            if (pool.length > 0) {
+                pool.forEach((num, idx) => groups[idx % groups.length].members.push(num));
+            }
+
+            let output = "";
+            groups.forEach(g => {
+                output += `第 ${g.id} 組 (${g.members.length}人): ${g.members.join(', ')}\n`;
+            });
+            showResultWithEffect('result-2', output);
+        }
+
+        function runMode3() {
+            const rawText = document.getElementById('m3-list').value;
+            const count = parseInt(document.getElementById('m3-count').value);
+            let list = rawText.split('\n').map(s => s.trim()).filter(s => s !== "");
+
+            const resultBox = document.getElementById('result-3');
+
+            if (list.length === 0) {
+                resultBox.innerHTML = '<span class="result-placeholder" style="color:#ff5e5e">請先輸入名單</span>';
+                return;
+            }
+            if (isNaN(count) || count <= 0) {
+                resultBox.innerHTML = '<span class="result-placeholder" style="color:#ff5e5e">輸入錯誤</span>';
+                return;
+            }
+            if (count > list.length) {
+                resultBox.innerHTML = '<span class="result-placeholder" style="color:#ff5e5e">人數不足</span>';
+                return;
+            }
+
+            const placeholder = resultBox.querySelector('.result-placeholder');
+            if (placeholder) {
+                resultBox.removeChild(placeholder);
+            }
+
+            let currentDraw = [];
+            for (let i = 0; i < count; i++) {
+                const idx = Math.floor(Math.random() * list.length);
+                currentDraw.push(list[idx]);
+                list.splice(idx, 1);
+            }
+
+            const newEntry = document.createElement('div');
+            newEntry.className = 'history-item';
+            newEntry.textContent = currentDraw.join("、");
+            
+            if (resultBox.firstChild) {
+                resultBox.insertBefore(newEntry, resultBox.firstChild);
+            } else {
+                resultBox.appendChild(newEntry);
+            }
+            
+            resultBox.scrollTop = 0;
+        }
+
+        function resetMode3() {
+            const resultBox = document.getElementById('result-3');
+            resultBox.innerHTML = '<span class="result-placeholder">準備就緒</span>';
+        }
+
+    </script>
+</body>
+</html>

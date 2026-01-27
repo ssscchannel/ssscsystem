@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>晟自然 - 複選題庫轉換工具 (Excel to JSON)</title>
+    <style>
+        body { font-family: 'Segoe UI', Microsoft JhengHei, sans-serif; padding: 20px; background: #f0f2f5; }
+        .container { max-width: 800px; margin: 0 auto; background: white; padding: 30px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #2b4b82; border-bottom: 2px solid #2b4b82; padding-bottom: 10px; }
+        .step { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; }
+        input[type="file"] { display: block; width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #2b4b82; color: white; border: none; padding: 10px 20px; font-size: 1rem; border-radius: 5px; cursor: pointer; transition: 0.2s; }
+        button:hover { background: #1a3a6e; }
+        button.btn-copy { background: #06c755; margin-left: 10px; }
+        textarea { width: 100%; height: 300px; margin-top: 10px; font-family: monospace; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        .note { color: #666; font-size: 0.9rem; background: #fff3cd; padding: 10px; border-radius: 5px; margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>晟自然 - 複選題庫轉換器</h2>
+    
+    <div class="note">
+        <strong>Excel 格式規定 (第一列標題)：</strong><br>
+        必須包含：<code>年級</code>, <code>單元</code>, <code>題目</code>, <code>正解</code>, <code>誘答</code><br>
+        分隔符號：請嚴格使用 <code>|</code> (例如：摩擦力|彈力)
+    </div>
+
+    <div class="step">
+        <label>1. 選擇 Excel 檔案 (.xlsx)</label>
+        <input type="file" id="fileInput" accept=".xlsx, .xls">
+    </div>
+
+    <div class="step">
+        <button onclick="startConvert()">開始轉換</button>
+        <button class="btn-copy" onclick="copyResult()">複製結果</button>
+    </div>
+
+    <div class="step">
+        <label>轉換結果 (請貼入 data_mul.js)</label>
+        <textarea id="outputArea" readonly placeholder="結果將顯示於此..."></textarea>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+    function startConvert() {
+        const fileInput = document.getElementById('fileInput');
+        const outputArea = document.getElementById('outputArea');
+
+        // 1. 檢查是否選檔
+        if (!fileInput.files || fileInput.files.length === 0) {
+            alert("請先選擇一個 Excel 檔案！");
+            return;
+        }
+
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            try {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, {type: 'array'});
+                
+                // 讀取第一個工作表
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // 轉為 JSON
+                const rows = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (rows.length === 0) {
+                    alert("Excel 檔案似乎是空的？");
+                    return;
+                }
+
+                // --- 開始轉換 ---
+                const finalData = {};
+                let count = 0;
+
+                rows.forEach((row, index) => {
+                    // 欄位容錯檢查
+                    if(!row['題目']) return; // 沒有題目的行直接跳過
+
+                    const grade = (row['年級'] || '未分類年級').toString().trim();
+                    const unit = (row['單元'] || '未分類單元').toString().trim();
+                    const qText = row['題目'].toString().trim();
+                    
+                    // 嚴格使用 | 切割
+                    const correctStr = (row['正解'] || '').toString();
+                    const decoyStr = (row['誘答'] || '').toString();
+                    
+                    const correctArr = correctStr.split('|').map(s => s.trim()).filter(s => s !== "");
+                    const decoysArr = decoyStr.split('|').map(s => s.trim()).filter(s => s !== "");
+
+                    if (correctArr.length === 0) {
+                        console.warn(`第 ${index+2} 行資料沒有正解，已跳過。`);
+                        return;
+                    }
+
+                    // 建立層級
+                    if (!finalData[grade]) finalData[grade] = {};
+                    if (!finalData[grade][unit]) finalData[grade][unit] = [];
+
+                    finalData[grade][unit].push({
+                        question: qText,
+                        correct: correctArr,
+                        decoys: decoysArr
+                    });
+                    count++;
+                });
+
+                // 輸出
+                const resultStr = "var questionData = " + JSON.stringify(finalData, null, 4) + ";";
+                outputArea.value = resultStr;
+                alert(`轉換成功！共處理 ${count} 題。\n請點擊「複製結果」並貼到 data_mul.js`);
+
+            } catch (err) {
+                console.error(err);
+                alert("轉換發生錯誤，請檢查 Excel 格式。\n(按 F12 看詳細錯誤)");
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+    }
+
+    function copyResult() {
+        const textArea = document.getElementById('outputArea');
+        if(!textArea.value) {
+            alert("沒有內容可以複製！");
+            return;
+        }
+        textArea.select();
+        document.execCommand('copy');
+        alert("已複製到剪貼簿！");
+    }
+</script>
+
+</body>
+</html>
