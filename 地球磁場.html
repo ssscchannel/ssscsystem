@@ -4,11 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     
-    <title>晟自然輔助系統　地磁與磁力線模擬 V3</title>
+    <title>晟自然輔助系統　地球磁場的磁力線模擬</title>
     
     <style>
         /* =========================================
-           1. 公版核心樣式
+           1. 公版核心樣式 (Template V3)
            ========================================= */
         html, body {
             margin: 0; padding: 0; width: 100%;
@@ -26,185 +26,200 @@
             user-select: none; -webkit-user-select: none;
         }
 
-        .header-container {
-            flex-shrink: 0;
-            width: 97%; max-width: 800px;
-            box-sizing: border-box;
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 8px 15px;
-            margin-top: 5px; margin-bottom: 5px;
-            
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
+        .app-layout-wrapper {
+            width: 100%;
+            max-width: 600px;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: transparent;
+            margin: 0 auto;
         }
-        .header-container h1 {
-            margin: 0; font-size: 1.1rem; color: #333;
-            font-weight: 700; display: flex; align-items: center; gap: 10px;
-            white-space: nowrap;
-        }
-        .title-logo { height: 36px; width: auto; border-radius: 4px; }
 
-        .nav-buttons { display: flex; gap: 8px; align-items: center; }
-        .line-btn {
-            text-decoration: none; display: inline-flex; align-items: center; justify-content: center;
-            padding: 6px 12px; background: #06c755; color: white;
-            font-size: 0.9rem; font-weight: bold; border-radius: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2); transition: transform 0.1s;
+        /* [Header] 藍紅黃漸層 */
+        .main-header {
+            flex-shrink: 0;
+            width: 100%;
+            height: 60px;
+            background: linear-gradient(90deg, #1a2a6c, #b21f1f, #fdbb2d);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
+            color: white;
         }
-        .line-btn:active { transform: scale(0.95); }
+
+        .logo-area {
+            width: 40px; height: 40px;
+            background-color: white;
+            border-radius: 50%; /* 圓形 */
+            margin-right: 15px;
+            background-image: url('logo.jpg');
+            background-size: cover;
+            border: 2px solid #00d2ff;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            flex: 1;
+            font-size: 1.0rem;
+            font-weight: bold;
+            color: white; /* 白色 */
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            white-space: normal;
+            line-height: 1.2;
+        }
+
+        .line-btn {
+            margin-left: auto;
+            background-color: #00B900;
+            color: white;
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+
+        /* [Footer] 底部區域 - 同樣漸層 */
+        .main-footer {
+            flex: 0 0 auto;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            padding: 15px;  /* 上左右保持 15px */
+            
+            /* 關鍵語法：基礎 20px 空隙 + 手機底部安全區(若有的話) */
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            
+            box-sizing: border-box;
+            
+            display: flex; /* 確保內容對齊 */
+            flex-direction: column; /* 垂直排列 */
+            gap: 10px; /* 元件之間的間距 */
+        }
 
         /* =========================================
-           2. 專案特定樣式
+           2. 模擬區塊樣式
            ========================================= */
-
         #simulation-area {
             flex-grow: 1; 
-            width: 98%; 
-            max-width: 900px;
-            margin-bottom: 0; 
-            display: flex; flex-direction: column; position: relative;
+            width: 100%; 
+            position: relative;
+            overflow: hidden;
+            display: flex; flex-direction: column;
         }
 
         .simulation-container {
             flex-grow: 1;
             width: 100%;
             position: relative;
-            background: rgba(20, 30, 40, 0.7);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            border-radius: 16px;
-            box-shadow: 0 0 40px rgba(0, 0, 0, 0.4);
+            /* 背景維持透明或微透，讓星空圖可見 */
+            background: rgba(20, 30, 40, 0.3); 
             overflow: hidden;
             display: flex; justify-content: center; align-items: center;
         }
 
         canvas {
             width: 100%; height: 100%;
-            cursor: grab;
             touch-action: none;
             position: absolute; top: 0; left: 0;
         }
-        canvas:active { cursor: grabbing; }
 
+        /* 內部提示 */
         .internal-instruction {
             position: absolute; top: 20px; left: 50%; transform: translateX(-50%);
             color: rgba(255, 255, 255, 0.9); font-size: 1.1rem; font-weight: bold;
-            pointer-events: none; text-shadow: 0 2px 8px rgba(0,0,0,0.8);
-            letter-spacing: 1px;
-            display: block; 
-            background: rgba(0,0,0,0.3);
+            pointer-events: none; text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.4);
             padding: 5px 15px;
             border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.1);
+            border: 1px solid rgba(255,255,255,0.2);
+            z-index: 10;
         }
 
-        .controls {
-            position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
-            width: auto; background: none; border: none; box-shadow: none; backdrop-filter: none;
-            display: flex; justify-content: center; z-index: 20;
-        }
-
+        /* 控制按鈕樣式 - 修改為長形圓角 */
         .toggle-btn {
-            background: rgba(0, 0, 0, 0.6); 
-            border: 1px solid #409cff;
-            color: #409cff;
-            padding: 10px 30px; 
-            border-radius: 30px;
-            font-size: 1.1rem; 
-            cursor: pointer; transition: all 0.2s;
-            display: flex; align-items: center; gap: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            text-align: center;
+            box-sizing: border-box;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-        .toggle-btn:active { transform: scale(0.95); }
-        .toggle-btn.active {
-            background: #409cff; color: #000; font-weight: bold;
-            box-shadow: 0 0 25px rgba(64, 156, 255, 0.8); 
+        
+        .toggle-btn:active { 
+            transform: scale(0.97); 
         }
 
-        @media (max-width: 600px) {
-            .mobile-break { display: block; height: 0; }
-            .header-container h1 { font-size: 1rem; }
+        /* 方位雷達 (維持右上角) */
+        .radar-widget {
+            position: absolute;
+            right: 20px;
+            top: 60px;
+            width: 50px; height: 50px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 40%, rgba(255, 255, 255, 0.1) 100%);
+            z-index: 10;
         }
-		
-		/* =========================================
-		[新增模組] 底部方位雷達羅盤 (Radar Compass)
-		========================================= */
-		.radar-widget {
-    		position: absolute;
-			right: 20px;          /* 靠右側空白區 */
-			top: 10%;
-			transform: translateY(-50%);
-			width: 50px;
-			height: 50px;
-			border: 2px solid rgba(255, 255, 255, 0.2);
-			border-radius: 50%;   /* 正圓形 */
-			box-sizing: border-box;
-			pointer-events: none; /* 確保不會阻擋觸控 */			
-			/* 淡淡的雷達背景色 */
-			background: radial-gradient(circle, transparent 40%, rgba(255, 255, 255, 0.05) 100%);
-		}
-		
-		/* 十字準星線條 */
-		.radar-widget::before, .radar-widget::after {
-    		content: '';
-			position: absolute;
-			background-color: rgba(255, 255, 255, 0.15);
-		}
-		.radar-widget::before { /* 垂直線 */
-    		top: 5px; bottom: 5px; left: 50%; width: 1px;
-		}
-		.radar-widget::after { /* 水平線 */
-    		left: 5px; right: 5px; top: 50%; height: 1px;
-		}
-				
-		/* 方位文字標籤共用設定 */
-		.radar-label {
-    		position: absolute;
-			font-size: 10px;
-			font-weight: bold;
-			color: rgba(255, 255, 255, 0.5);
-			line-height: 1;
-		}
-		/* 各方位定位與顏色 */
-		.label-n { top: 2px; left: 50%; transform: translateX(-50%); color: #ff4444; text-shadow: 0 0 5px rgba(255,0,0,0.5); } /* N 紅色發光 */
-		.label-s { bottom: 2px; left: 50%; transform: translateX(-50%); }
-		.label-e { right: 4px; top: 50%; transform: translateY(-50%); }
-		.label-w { left: 4px; top: 50%; transform: translateY(-50%); }
-		
+        .radar-widget::before { content:''; position: absolute; top: 5px; bottom: 5px; left: 50%; width: 1px; background: rgba(255,255,255,0.2); }
+        .radar-widget::after { content:''; position: absolute; left: 5px; right: 5px; top: 50%; height: 1px; background: rgba(255,255,255,0.2); }
+        .radar-label { position: absolute; font-size: 10px; font-weight: bold; color: rgba(255,255,255,0.6); line-height: 1; }
+        .label-n { top: 2px; left: 50%; transform: translateX(-50%); color: #ff5555; }
+        .label-s { bottom: 2px; left: 50%; transform: translateX(-50%); }
+        .label-e { right: 4px; top: 50%; transform: translateY(-50%); }
+        .label-w { left: 4px; top: 50%; transform: translateY(-50%); }
+
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>
-            <img src="logo.jpg" alt="Logo" class="title-logo" onerror="this.style.display='none'">
-            <div>
-                晟自然玩科學　<span class="mobile-break"></span>地球磁場模擬
-            </div>
-        </h1>
-        <div class="nav-buttons">
+    <div class="app-layout-wrapper">
+        
+        <header class="main-header">
+            <div class="logo-area"></div>
+            <div class="header-title">晟自然輔助系統<br>地球磁場的磁力線模擬</div>
             <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="line-btn">
-                <span>👉</span>加 LINE 提問
-            </a>       
-        </div>
-    </div>
+                加 LINE 討論
+            </a>
+        </header>
 
-    <div id="simulation-area">
-        <div class="simulation-container">
-            <canvas id="simCanvas"></canvas>
-            <div class="internal-instruction">💡 請任意移動磁針</div>
-            <div class="controls">
-                <div class="toggle-btn active" id="btn-magnet" onclick="toggleLayer('magnet')">地磁</div>
+        <div id="simulation-area">
+            <div class="simulation-container" id="sim-container">
+                <canvas id="simCanvas"></canvas>
+                
+                <div class="internal-instruction">💡 請任意移動磁針</div>
+                
+                <div class="radar-widget">
+                    <div class="radar-label label-n">N</div>
+                    <div class="radar-label label-e">E</div>
+                    <div class="radar-label label-s">S</div>
+                    <div class="radar-label label-w">W</div>
+                </div>
             </div>
-			<div class="radar-widget">
-    			<div class="radar-label label-n">N</div>
-				<div class="radar-label label-e">E</div>
-				<div class="radar-label label-s">S</div>
-				<div class="radar-label label-w">W</div>
-			</div>
         </div>
+
+        <footer class="main-footer">
+            <div class="toggle-btn active" id="btn-magnet" onclick="toggleLayer('magnet')">地磁</div>
+        </footer>
+
     </div>
 
     <script>
@@ -224,7 +239,6 @@
         const state = { magnet: true };
         const MAG_TILT = -11.9 * (Math.PI / 180); 
         
-        // 初始位置設定在右側赤道
         let compassPos = { x: ORBIT_R, y: 0 }; 
         let compassAngle = -Math.PI / 2; 
         let isDragging = false;
@@ -235,7 +249,8 @@
         let renderOffsetY = 0;
 
         function resize() {
-            const container = document.querySelector('.simulation-container');
+            // [修正] 改為偵測 simulation-container 大小
+            const container = document.getElementById('sim-container');
             const w = container.clientWidth;
             const h = container.clientHeight;
             const dpr = window.devicePixelRatio || 1;
@@ -260,7 +275,6 @@
                     speed: 0.002 + Math.random() * 0.003
                 });
             }
-            // 確保初始位置正確 (右側)
             updateCompassPhysics(ORBIT_R, 0); 
             requestAnimationFrame(loop);
         }
@@ -340,10 +354,9 @@
             const R_GEO_LABEL_X = 150;          
             const AXIS_LEN = R_EARTH + 140; 
 
-            // [修改點 A] 線條顏色與透明度 (0.3 為透明度)
 			ctx.strokeStyle = "rgba(255,255,255,0.3)";
-            ctx.lineWidth = 2; // 若覺得太細，可改成 4 或 5
-            ctx.setLineDash([15, 15]); // 若要更疏鬆，可改成 [15, 15]；若要實線，改成 []
+            ctx.lineWidth = 2;
+            ctx.setLineDash([15, 15]); 
             ctx.beginPath(); ctx.moveTo(0, -AXIS_LEN); ctx.lineTo(0, AXIS_LEN); ctx.stroke();
             ctx.setLineDash([]);
             
@@ -402,7 +415,7 @@
         function drawCuteArrow(x1, y1, x2, y2, color) {
             ctx.beginPath();
             ctx.strokeStyle = color;
-            ctx.lineWidth = 3; // 可加粗至 5 或 6
+            ctx.lineWidth = 3;
             
             const cpX = (x1 + x2) / 2;
             const curvature = (x2 - x1) * 0.2; 
@@ -412,7 +425,6 @@
             ctx.quadraticCurveTo(cpX, cpY, x2, y2);
             ctx.stroke();
 
-            // 下面這段控制箭頭的「三角形頭部」大小
 			ctx.save();
             ctx.translate(x2, y2);
             
@@ -422,10 +434,6 @@
             ctx.fillStyle = color;
             ctx.beginPath();
             ctx.moveTo(0, 0);
-			
-			// [修改點 B] 箭頭頭部大小
-			// -12 是長度，7 是寬度的一半
-			// 若要變大，可改成 (-20, -12) 與 (-20, 12)
             ctx.lineTo(-20, -12); 
             ctx.lineTo(-20, 12);
             ctx.fill();
@@ -500,11 +508,7 @@
             return m*m*m*p0 + 3*m*m*t*p1 + 3*m*t*t*p2 + t*t*t*p3;
         }
 
-        // =========================================
-        // [核心修正] 向量計算與區域混合
-        // =========================================
         function updateCompassPhysics(worldX, worldY) {
-            // 1. 轉換至磁鐵座標系
             const cosT = Math.cos(-MAG_TILT);
             const sinT = Math.sin(-MAG_TILT);
             const rx = worldX * cosT - worldY * sinT;
@@ -512,44 +516,15 @@
             const r2 = rx*rx + ry*ry;
             const r = Math.sqrt(r2);
             
-            // 2. 計算真實磁場向量 (Real Dipole B)
-            // 在我們的模型中，外部磁力線流向為 Bottom(Red N) -> Top(Green S)
-            // 這相當於在赤道處，磁場向量指向 -Y (上)
-            // 偶極子公式 B = 3(m.r)r/r^5 - m/r^3
-            // 這裡 m 指向 (0, 1) [向下] 才能產生向上的赤道場? 
-            // 讓我們觀察：m=(0,1), 赤道(1,0), m.r=0, B = -(0,1) = (0,-1) [向上]. 對了。
-            // 檢查極點(0,1, Bottom). m.r=1. B=3(1)(0,1)-(0,1)=(0,2) [向下/向外]. 對了(紅極噴出)。
-            // 檢查極點(0,-1, Top). m.r=-1. B=3(-1)(0,-1)-(0,1)=(0,3)-(0,1)=(0,2)? 
-            // Wait. r=(0,-1). 3(-1)(0,-1) = (0,3). - (0,1) = (0,2) [向下/向內]. 對了(綠極吸入)。
-            
-            // 所以 m = (0, 1) 的偶極場公式：
-            // Bx = 3 * rx * ry / r^5  (省略分母 r^5, 只看方向) -> 3xy
-            // By = (3 * ry^2 - r^2) / r^5 -> 2y^2 - x^2
-            // 記得要正規化
-            
             const bx = 3 * rx * ry;
             const by = 2 * ry * ry - rx * rx;
             const bLen = Math.sqrt(bx*bx + by*by);
             const bx_norm = bx / bLen;
             const by_norm = by / bLen;
 
-            // 3. 計算「指向北方的切線」 (Tangent North)
-            // 在這個模型，北方 = 綠極 = 負Y軸方向
-            // 在赤道右側 (x>0), 北是 -y. T = (0, -1)
-            // 在赤道左側 (x<0), 北是 -y. T = (0, -1)
-            // 在任意點 (rx, ry), 切線垂直於半徑. T dot R = 0.
-            // T = (-ry, rx) 或 (ry, -rx).
-            // 我們希望 T 的 y 分量盡量是負的 (指向北方).
-            // 當 x>0, T=(0,-1) -> (ry, -rx) => (0, -x). ok.
-            // 當 x<0, T=(0,-1) -> (-ry, rx) => (0, x). x是負的,所以是負. ok.
-            // 稍微複雜，我們用最簡單的「修正地表平行」概念：
-            // 平行地表 = 垂直於半徑.
-            // 我們要選那個「跟 B 向量夾角較小」的切線方向
-            
             const t1x = -ry; const t1y = rx;
             const t2x = ry;  const t2y = -rx;
             
-            // 點積判斷哪個跟 B 同向
             const dot1 = t1x*bx_norm + t1y*by_norm;
             let tx_final, ty_final;
             
@@ -560,22 +535,16 @@
             const tx_norm = tx_final / tLenFinal;
             const ty_norm = ty_final / tLenFinal;
 
-            // 4. 區域混合 (Lerp)
-            // 計算磁緯度 absSinLat = |y| / r
             const absSinLat = Math.abs(ry) / r;
             
-            let factor = 0; // 0=Tangent, 1=Dipole
-            // < 30度 (sin 0.5): 保持平行
-            // > 65度 (sin 0.9): 真實物理
+            let factor = 0; 
             if (absSinLat < 0.5) factor = 0;
             else if (absSinLat > 0.985) factor = 1;
             else factor = (absSinLat - 0.5) / (0.485);
 
-            // 5. 混合
             const final_x = tx_norm * (1 - factor) + bx_norm * factor;
             const final_y = ty_norm * (1 - factor) + by_norm * factor;
 
-            // 6. 轉回世界角度
             const angle_mag = Math.atan2(final_y, final_x);
             compassAngle = angle_mag + MAG_TILT;
         }
@@ -585,7 +554,6 @@
             const cy = compassPos.y;
 
             if (isDragging) {
-                // 拖曳時，顯示指向圓心的輔助線
                 ctx.save();
                 ctx.strokeStyle = "rgba(255, 50, 50, 0.3)";
                 ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
@@ -597,8 +565,6 @@
             ctx.translate(cx, cy);
             ctx.rotate(compassAngle);
             
-			// size: 箭頭尾部的寬度 (數值越大越胖)
-			// len:  箭頭尖端的長度 (數值越大越長)
             const size = 10, len = 50; 
             ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-size, -14); ctx.lineTo(len, 0); ctx.lineTo(-size, 14);
             ctx.fillStyle = "#ff3333"; ctx.fill();
@@ -635,22 +601,20 @@
             isDragging = true;
             const pos = getLogicalPos(e);
             updateCompassPosition(pos.x, pos.y);
-            e.preventDefault(); 
+            if(e.cancelable) e.preventDefault(); 
         }
 
         function onMove(e) {
             if(!isDragging) return;
-            e.preventDefault();
+            if(e.cancelable) e.preventDefault();
             const pos = getLogicalPos(e);
             updateCompassPosition(pos.x, pos.y);
         }
         
         function updateCompassPosition(tx, ty) {
-            // [修正] 強制鎖定在圓形軌道 (使用 atan2 取得角度，然後重設半徑)
             const ang = Math.atan2(ty, tx);
             compassPos.x = Math.cos(ang) * ORBIT_R;
             compassPos.y = Math.sin(ang) * ORBIT_R;
-            
             updateCompassPhysics(compassPos.x, compassPos.y);
         }
 
