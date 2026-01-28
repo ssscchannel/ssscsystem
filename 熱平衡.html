@@ -515,8 +515,8 @@
         <main class="content-scroll-area">
                      
             <div class="topic-description">
-                調整冷熱水的溫度與質量，<br>
-                按下「開始混合」觀察熱平衡的溫度變化與計算過程。
+                選擇模式，設定參數，按下「開始混合」觀察實驗結果。<br>
+                
             </div>
 			
 			<div class="simulation-container" id="sim-container">
@@ -545,7 +545,7 @@
 
             <div class="info-container" id="math-board">
                 <div style="color:#666; font-size:0.9rem; text-align:center;">
-                    請輸入上方數據，<br>並按下「開始混合」觀察實驗。
+                    請輸入下方數據，<br>並按下「開始混合」觀察實驗。
                 </div>
             </div>
 
@@ -560,7 +560,7 @@
 
                 <div class="params-grid">
     <div class="param-col">
-        <div class="param-col-header cold" id="lbl-obj1">低溫 (水)</div>
+        <div class="param-col-header cold" id="lbl-obj1">液體 (A)</div>
         
         <div class="param-row">
             <div class="param-item input-group">
@@ -580,7 +580,7 @@
     </div>
 
     <div class="param-col">
-        <div class="param-col-header hot" id="lbl-obj2">高溫 (水)</div>
+        <div class="param-col-header hot" id="lbl-obj2">液體 (B)</div>
         
         <div class="param-row">
             <div class="param-item input-group">
@@ -705,8 +705,8 @@
                 viewCanvas.classList.remove('active');
                 DOM.btnModeLiquid.classList.add('active');
                 DOM.btnModeSolid.classList.remove('active');
-                DOM.lblObj1.textContent = "低溫 (水)";
-                DOM.lblObj2.textContent = "高溫 (水)";
+                DOM.lblObj1.textContent = "液體 (A)";
+                DOM.lblObj2.textContent = "液體 (B)";
                 DOM.inputs.s1.value = 1;
                 DOM.inputs.s2.value = 1;
             } else {
@@ -714,10 +714,10 @@
                 viewCanvas.classList.add('active');
                 DOM.btnModeLiquid.classList.remove('active');
                 DOM.btnModeSolid.classList.add('active');
-                DOM.lblObj1.textContent = "容器 (水)";
-                DOM.lblObj2.textContent = "投入物 (金屬)";
+                DOM.lblObj1.textContent = "液體";
+                DOM.lblObj2.textContent = "投入物";
                 DOM.inputs.s1.value = 1;
-                DOM.inputs.s2.value = 0.093; 
+                DOM.inputs.s2.value = 0.09; 
             }
             updateStateFromInputs();
         }
@@ -861,19 +861,26 @@
                 return;
             }
 
-            // 5. 回填數值
-            // 使用 Math.round 避免出現 0.9999999 這種浮點數誤差
-            // 比熱通常取小數點後 3 位，其他取 1 位
-            DOM.inputs.m1.value = parseFloat(v.m1.toFixed(1));
-            DOM.inputs.t1.value = parseFloat(v.t1.toFixed(1));
-            DOM.inputs.s1.value = parseFloat(v.s1.toFixed(3)); // 比熱精度較高
-            DOM.inputs.m2.value = parseFloat(v.m2.toFixed(1));
-            DOM.inputs.t2.value = parseFloat(v.t2.toFixed(1));
-            DOM.inputs.s2.value = parseFloat(v.s2.toFixed(3));
-            DOM.inputs.tmix.value = v.tmix.toFixed(1);
+            // 5. 回填數值 (使用 parseFloat 去除整數後面的 .0)
+            v.m1 = parseFloat(v.m1.toFixed(1));
+            v.t1 = parseFloat(v.t1.toFixed(1));
+            v.s1 = parseFloat(v.s1.toFixed(3)); // 比熱維持 3 位
+            v.m2 = parseFloat(v.m2.toFixed(1));
+            v.t2 = parseFloat(v.t2.toFixed(1));
+            v.s2 = parseFloat(v.s2.toFixed(3)); // 比熱維持 3 位
+            v.tmix = parseFloat(v.tmix.toFixed(1));
+
+            // 更新輸入框
+            DOM.inputs.m1.value = v.m1;
+            DOM.inputs.t1.value = v.t1;
+            DOM.inputs.s1.value = v.s1;
+            DOM.inputs.m2.value = v.m2;
+            DOM.inputs.t2.value = v.t2;
+            DOM.inputs.s2.value = v.s2;
+            DOM.inputs.tmix.value = v.tmix;
 
             // 更新全域狀態
-            state.vals = JSON.parse(JSON.stringify(v)); 
+            state.vals = JSON.parse(JSON.stringify(v));
 
             // 6. 介面鎖定
             lockInputs(true);
@@ -927,7 +934,7 @@
             updateStateFromInputs();
             
             // 清空算式區
-            if(DOM.mathBoard) DOM.mathBoard.innerHTML = '<div style="color:#666; font-size:0.9rem; text-align:center;">請輸入上方數據，<br>並按下「開始混合」觀察實驗。</div>';
+            if(DOM.mathBoard) DOM.mathBoard.innerHTML = '<div style="color:#666; font-size:0.9rem; text-align:center;">請輸入下方數據，<br>並按下「開始混合」觀察實驗。</div>';
         }
         
         function lockInputs(lock) {
@@ -1016,7 +1023,7 @@
             
             // 3. 繪製水 (使用動態計算的高度)
             const waterColor = state.phase === 'result' ? tempToColor(state.vals.tmix) : tempToColor(state.vals.t1);
-            drawBeaker(centerX, floorY, cupW, cupH, finalH, waterColor, "水");
+            drawBeaker(centerX, floorY, cupW, cupH, finalH, waterColor, "液體");
 
             // 4. 繪製金屬塊動畫
             const startY = 50;
@@ -1038,30 +1045,47 @@
             // 標籤
             ctx.fillStyle = '#333';
             ctx.font = 'bold 12px Arial';
-            ctx.fillText("金屬", w/2 - 12, currentY - blockSize - 5);
+            ctx.fillText("固體", w/2 - 12, currentY - blockSize - 5);
         }
 
         function drawBeaker(x, y, w, h, waterH, color, label) {
+            const r = 10; // 設定燒杯底部的圓角半徑
+            
+            // 1. 定義燒杯的路徑 (U型)
+            // 我們把路徑存起來，等一下「畫線」和「裁切液體」都要用同一條，保證密合
             ctx.beginPath();
-            ctx.strokeStyle = '#333';
-            ctx.lineWidth = 3;
-            ctx.moveTo(x, y - h);
-            ctx.lineTo(x, y);
-            ctx.lineTo(x + w, y);
-            ctx.lineTo(x + w, y - h);
-            ctx.stroke();
+            ctx.moveTo(x, y - h);           // 左上
+            ctx.lineTo(x, y - r);           // 左下 (準備轉彎)
+            ctx.quadraticCurveTo(x, y, x + r, y); // 左下圓角
+            ctx.lineTo(x + w - r, y);       // 底部直線
+            ctx.quadraticCurveTo(x + w, y, x + w, y - r); // 右下圓角
+            ctx.lineTo(x + w, y - h);       // 右上
 
+            // 2. 繪製液體 (使用 Clip 裁切)
             if (waterH > 0) {
+                ctx.save(); // 暫存畫布狀態
+                
+                // 設為裁切區域 (之後畫的東西只能出現在剛剛的路徑內)
+                ctx.clip(); 
+                
                 ctx.fillStyle = color;
-                ctx.beginPath();
-                ctx.rect(x + 2, y - waterH, w - 4, waterH - 2);
-                ctx.fill();
+                // 直接畫一個矩形，Clip 會自動幫我們把超出的角落切掉
+                // y - waterH 是液面高度，多加一點高度(h)確保底部填滿
+                ctx.fillRect(x, y - waterH, w, h); 
+                
+                ctx.restore(); // 恢復畫布，取消裁切限制，以免影響邊框
             }
 
+            // 3. 繪製燒杯邊框 (蓋在液體上面)
+            ctx.strokeStyle = '#333';
+            ctx.lineWidth = 3;
+            ctx.stroke();
+
+            // 4. 文字標籤
             if (label) {
                 ctx.fillStyle = '#333';
                 ctx.font = 'bold 12px Arial';
-                ctx.fillText(label, x + w/2 - 10, y + 15);
+                ctx.fillText(label, x + w/2 - 10, y + 18);
             }
         }
 
@@ -1074,7 +1098,7 @@
         }
 
         // =========================================
-        // 6. 智慧算式推導引擎 (邏輯修正版)
+        // 6. 智慧算式推導引擎 (整數優化版)
         // =========================================
         async function renderMathSteps(v, target) {
             const board = document.getElementById('math-board'); 
@@ -1094,11 +1118,17 @@
                 await new Promise(r => setTimeout(r, delay));
             };
 
-            // --- 樣式工具 ---
+            // --- 樣式與格式化工具 ---
             const red = (txt) => `<span style="color:#d63031; font-weight:bold; font-size:1.1em;">${txt}</span>`;
             const blue = (txt) => `<span style="color:#0984e3; font-weight:bold;">${txt}</span>`;
             const num = (n) => `<span style="font-family:Consolas, monospace; color:#2d3436;">${n}</span>`;
             const unit = (u) => `<span style="color:#888; font-size:0.85em; margin-left:2px;">${u}</span>`;
+            
+            // 【核心修改】智慧格式化：先取小數點，再轉浮點數以去除無用的 .0
+            // 如果是整數 40.0 -> 變成 40
+            // 如果是小數 40.5 -> 保持 40.5
+            const fmt = (n, d=1) => parseFloat(n.toFixed(d));
+
             const headerStyle = "font-weight:bold; margin-bottom:2px; border-bottom:1px solid #eee; padding-bottom:2px; font-size:0.9rem; color:#555;";
 
             // --- Step 1: 物理原理 ---
@@ -1108,18 +1138,13 @@
             `, 800);
 
             // --- Step 2: 列出方程式 ---
-            // 顯示邏輯：如果是目標未知數，顯示紅色變數名；否則顯示數值
-            const show = (key) => (key === target) ? red(key) : num(v[key]);
+            const show = (key) => (key === target) ? red(key) : num(fmt(v[key], key.startsWith('s') ? 3 : 1));
 
-            // 【關鍵修正】決定平衡溫度 T 到底該顯示「數值」還是「符號」
-            // 只有在「解末溫」時，T 才是紅色的符號；其他時候 T 都是使用者輸入的已知數值
-            const T_display = (target === 'tmix') ? red("T") : num(v.tmix);
+            // 處理 T 的顯示 (只有算末溫時顯示符號，反求時顯示數值)
+            const T_display = (target === 'tmix') ? red("T") : num(fmt(v.tmix));
 
-            // 組合溫差字串 (注意順序：高溫 - 低溫)
-            // 左邊吸熱：(平衡溫度 - 初溫1)
+            // 組合溫差字串
             let dt1_str = `(${T_display} - ${show('t1')})`;
-            
-            // 右邊放熱：(初溫2 - 平衡溫度)
             let dt2_str = `(${show('t2')} - ${T_display})`;
 
             const leftExp = `${show('m1')}×${show('s1')}×${dt1_str}`;
@@ -1132,19 +1157,19 @@
 
             // --- Step 3: 直接顯示答案 ---
             let resultHTML = '';
-            let finalVal = v[target];
+            let val = v[target]; // 已經在 startSimulation 轉成漂亮數字了，這裡直接用即可
             
             if (target === 'tmix') {
-                resultHTML = `解得平衡溫度 ${red("T")} ≈ ${red(finalVal.toFixed(1))} ${unit("°C")}`;
+                resultHTML = `解得平衡溫度 ${red("T")} ≈ ${red(val)} ${unit("°C")}`;
             } 
             else if (['m1', 'm2'].includes(target)) {
-                resultHTML = `解得質量 ${red(target)} ≈ ${red(finalVal.toFixed(1))} ${unit("g")}`;
+                resultHTML = `解得質量 ${red(target)} ≈ ${red(val)} ${unit("g")}`;
             }
             else if (['s1', 's2'].includes(target)) {
-                resultHTML = `解得比熱 ${red(target)} ≈ ${red(finalVal.toFixed(3))} ${unit("cal/g·°C")}`;
+                resultHTML = `解得比熱 ${red(target)} ≈ ${red(val)} ${unit("cal/g·°C")}`;
             }
             else if (['t1', 't2'].includes(target)) {
-                resultHTML = `反推初始溫度 ${red(target)} ≈ ${red(finalVal.toFixed(1))} ${unit("°C")}`;
+                resultHTML = `反推初始溫度 ${red(target)} ≈ ${red(val)} ${unit("°C")}`;
             }
 
             await addLine(`
