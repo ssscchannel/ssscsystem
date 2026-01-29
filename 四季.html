@@ -92,7 +92,7 @@
         #simWrapper {
             position: relative;
             width: 600px; 
-            height: 420px;
+            height: 500px;
             margin: 0 auto;
             flex-shrink: 0;
             overflow: hidden;
@@ -100,7 +100,7 @@
 
         .simulation-container {
             position: absolute; top: 0; left: 0;
-            width: 600px; height: 420px;
+            width: 600px; height: 500px;
             background: var(--sky-gradient);
             border-radius: 0 0 12px 12px;
             box-shadow: 0 5px 15px rgba(0,0,0,0.1);
@@ -114,6 +114,7 @@
         .orbit-visual {
             position: absolute; top: 15px; right: 15px; width: 180px; height: 90px;
             z-index: 50; pointer-events: none; transform-origin: top right;
+			transform: scale(1.4);
         }
         .orbit-path {
             position: absolute; top: 50%; left: 50%; width: 160px; height: 50px;
@@ -438,11 +439,11 @@
                 const scale = availableWidth / 600;
                 simContainer.style.transform = `scale(${scale})`;
                 wrapper.style.width = `${600 * scale}px`;
-                wrapper.style.height = `${420 * scale}px`;
+                wrapper.style.height = `${500 * scale}px`;
             } else {
                 simContainer.style.transform = 'none';
                 wrapper.style.width = '600px';
-                wrapper.style.height = '420px';
+                wrapper.style.height = '500px';
             }
             updateSim(true);
         }
