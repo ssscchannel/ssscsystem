@@ -201,7 +201,7 @@
         :root {
             --wire-color: #333;
             --bulb-off: #bdc3c7;
-            --bulb-dim-color: #d35400;   /* 最暗 */
+            --bulb-dim-color: #b7950b;   /* 最暗 */
             --bulb-norm-color: #f1c40f;  /* 普通 */
             --bulb-bright-color: #fff700;/* 最亮 */
         }
@@ -292,23 +292,7 @@
         .battery-group.is-dead .sign-plus, 
         .battery-group.is-dead .sign-minus { color: #bdc3c7 !important; text-shadow: none !important; }
 
-        /* [移植與優化] 面板與控制項 */
-        .custom-info-box {
-            background: #ecf0f1;
-            padding: 10px;
-            border-radius: 8px;
-            border-left: 5px solid #3498db;
-            margin-bottom: 15px;
-        }
-        .info-title { font-weight: bold; color: #2980b9; margin-bottom: 5px; display: block; font-size: 1.1rem; }
-        .info-text { font-size: 1rem; line-height: 1.5; color: #555; display: block; white-space: pre-line; }
-
-        .controls-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 10px; 
-            width: 100%;
-        }
+        
         /* [修正] 底部按鈕樣式微調 - 讓字體適應小空間 */
 .scene-btn { 
     padding: 10px 5px; 
@@ -361,7 +345,7 @@
 .dashboard-header-row {
     display: flex;
     flex-wrap: wrap; /* 手機過窄時允許折行，避免爆版 */
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     gap: 8px; /* 標題與答案之間的距離 */
     margin-bottom: 8px;
@@ -387,47 +371,49 @@
     display: block; 
     text-align: left;       /* 關鍵修正：靠左 */
     line-height: 1.6;       /* 增加行高，提升閱讀舒適度 */
-    padding: 0 10px;        /* 左右留白，避免貼齊邊框 */
+    padding: 0 ;        /* 左右留白，避免貼齊邊框 */
     margin-bottom: 8px;
 }
 
+/* 補回標題樣式 */
+.info-title {
+    font-weight: bold;   /* 粗體 */
+    color: #2980b9;      /* 藍色 */
+    font-size: 1.1rem;   /* 字體大小 */
+    display: block;      /* 確保獨佔一行 */
+    margin-bottom: 5px;
+}
+
     </style>
-</head>
-<body>
+	</head>
+	<body>
 
-    <div class="app-layout-wrapper">
+		<div class="app-layout-wrapper">
         
-        <header class="main-header">
-            <a href="index.html" class="logo-area" title="返回大廳"></a>
-            <div class="header-title">晟自然輔助系統<br>燈泡亮暗模擬</div>
+			<header class="main-header">
+				<a href="index.html" class="logo-area" title="返回大廳"></a>
+				<div class="header-title">晟自然輔助系統<br>燈泡亮暗模擬</div>
             
-            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="line-btn">
-                加 LINE 討論
-            </a>
-        </header>
+				<a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="line-btn">
+					加 LINE 討論
+				</a>
+			</header>
 
-        <main class="content-scroll-area">
-    
-<div class="ui-card" id="status-dashboard" style="margin-bottom: 5px; padding: 10px 5px;">
-    
-    <div class="dashboard-header-row">
-        <span class="info-title" id="infoTitle" style="font-size: 1.1rem; color: #2980b9; margin: 0;">
-            請選擇電路
-        </span>
-        <span class="answer-badge" id="infoBrightness" style="display:none;">
-            亮度：?
-        </span>
-    </div>
-    
-    <div class="dashboard-text-left" id="infoText">
-        請點擊下方按鈕切換不同接法<br>觀察燈泡亮度變化
-    </div>
-
-    <div style="text-align: center;"> <div class="interaction-hint">
-            💡 點擊「燈泡」或「電池」可模擬故障與沒電
-        </div>
-    </div>
-</div>
+			<main class="content-scroll-area">
+		
+			<div class="ui-card" id="status-dashboard">
+			<div class="dashboard-header-row">
+				<span class="info-title" id="infoTitle"></span>
+					<span class="answer-badge" id="infoBrightness">
+					亮度：?
+				</span>
+			</div>
+			<div class="dashboard-text-left" id="infoText"></div>
+			<div style="text-align: center;"> <div class="interaction-hint">
+				💡 點擊「燈泡」或「電池」可模擬故障與沒電
+			</div>
+		</div>
+	</div>
     
     <div class="simulation-container" id="sim-container">
         <div class="circuit-board-scale" id="circuit-board">
@@ -499,11 +485,11 @@
         </div> </div> </main>
         
         <footer class="controls-dock">
-    <button class="scene-btn" onclick="switchScene('A', this)">燈泡串聯<br>電池串聯</button>
-    <button class="scene-btn" onclick="switchScene('B', this)">燈泡串聯<br>電池並聯</button>
-    <button class="scene-btn" onclick="switchScene('C', this)">燈泡並聯<br>電池串聯</button>
-    <button class="scene-btn" onclick="switchScene('D', this)">燈泡並聯<br>電池並聯</button>
-</footer>
+			<button class="scene-btn" onclick="switchScene('A', this)">燈泡串聯＋電池串聯</button>
+			<button class="scene-btn" onclick="switchScene('B', this)">燈泡串聯＋電池並聯</button>
+			<button class="scene-btn" onclick="switchScene('C', this)">燈泡並聯＋電池串聯</button>
+			<button class="scene-btn" onclick="switchScene('D', this)">燈泡並聯＋電池並聯</button>
+		</footer>
 
     </div>
 
@@ -518,7 +504,7 @@
             console.log("晟自然輔助系統 - 燈泡模擬初始化完成");
         }
         
-        window.addEventListener('load', init);
+        window.addEventListener('DOMContentLoaded', init);
         window.addEventListener('resize', autoFitCircuit);
 
         // 2. 自動縮放邏輯 (確保 500px 寬的電路圖在手機上完整顯示)
