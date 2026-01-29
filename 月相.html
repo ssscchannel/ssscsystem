@@ -111,7 +111,7 @@
 
         /* 太陽光指示 */
         .sun-indicator-group {
-            position: absolute; top: 45%; right: 15px; transform: translateY(-50%);
+            position: absolute; top: 38%; right: 15px; transform: translateY(-50%);
             display: flex; flex-direction: row; align-items: center; z-index: 5;
         }
         .sun-arrows-col { display: flex; flex-direction: column; gap: 5px; margin-right: 8px; }
@@ -129,7 +129,7 @@
 
         /* 中央地球與軌道系統 */
         .system-center {
-            position: absolute; top: 45%; left: 50%;
+            position: absolute; top: 38%; left: 50%;
             transform: translate(-50%, -50%);
             width: 300px; height: 300px;
             border-radius: 50%; border: 2px dashed rgba(255,255,255,0.4); z-index: 5;
@@ -181,6 +181,8 @@
             border-top: 1px solid rgba(255,255,255,0.2); border-right: 1px solid rgba(255,255,255,0.2);
             border-radius: 0 15px 0 0; display: flex; flex-direction: column; align-items: center;
             justify-content: flex-start; z-index: 50; padding: 10px 5px 5px 5px; 
+			transform: scale(1.2);         /* 放大 1.2 倍 */
+            transform-origin: bottom left; /* 指定以「左下角」為基準點放大 */
         }
         .view-title { color: #aaa; font-size: 11px; margin-bottom: 5px; text-align: center; white-space: nowrap; }
         .moon-phase-render {
@@ -202,6 +204,8 @@
             border-top: 1px solid rgba(255,255,255,0.2); border-left: 1px solid rgba(255,255,255,0.2);
             border-radius: 15px 0 0 0; display: flex; flex-direction: column; align-items: center;
             justify-content: flex-start; z-index: 50; padding: 10px 5px 5px 5px;
+			transform: scale(1.2);          /* 放大 1.2 倍 */
+            transform-origin: bottom right; /* 指定以「右下角」為基準點放大 */
         }
         .horizon-stage {
             width: 100%; height: 80px; position: relative; border-bottom: 2px solid #555; 
