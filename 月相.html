@@ -64,10 +64,10 @@
             background: rgba(255, 255, 255, 0.98);
             box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
             z-index: 100;
-            padding: 10px 15px;
+            padding: 8px 15px;
             box-sizing: border-box;
             padding-bottom: calc(10px + env(safe-area-inset-bottom));
-            display: flex; flex-direction: column; gap: 8px;
+            display: flex; flex-direction: column; gap: 4px;
         }
 
         /* UI 卡片樣式 */
@@ -235,6 +235,7 @@
         .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
         .info-item { 
             font-size: 0.95rem; color: #444; display: flex; align-items: center; line-height: 1.5;
+			min-height: 45px;
         }
         .label {
             display: inline-block; width: 7em; white-space: nowrap;
@@ -244,15 +245,15 @@
         .blue-high { color: #2980b9; font-weight: bold; }
         .desc-wrapper {
             margin-top: 5px; font-size: 0.95rem; color: #444; 
-            min-height: 2.8em; line-height: 1.5; display: flex; align-items: flex-start;
+            min-height: 4.6em; line-height: 1.5; display: flex; align-items: flex-start;
         }
 
         /* 控制面板內容樣式 */
-        .control-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .control-row { display: flex; align-items: center; gap: 10px; margin-bottom: 5px; }
         label { font-weight: bold; color: #555; min-width: 70px; font-size: 0.95rem;}
         input[type=range] { flex-grow: 1; cursor: pointer; height: 25px; accent-color: #8e44ad; }
         
-        .btn-group { display: flex; gap: 5px; width: 100%; flex-wrap: wrap; margin-bottom: 10px;}
+        .btn-group { display: flex; gap: 5px; width: 100%; flex-wrap: wrap; margin-bottom: 5px;}
         .btn {
             flex: 1; padding: 8px 5px; border: 2px solid #ddd; border-radius: 6px;
             background: #fff; color: #555; font-weight: bold; cursor: pointer;
@@ -261,7 +262,7 @@
         .btn:hover { background: #eee; border-color: #bbb; }
         .btn.active { background: #8e44ad; color: white; border-color: #732d91; }
 
-        .time-btn-group { display: flex; gap: 5px; width: 100%; margin-bottom: 8px; }
+        .time-btn-group { display: flex; gap: 5px; width: 100%; margin-bottom: 2px; }
         .time-btn {
             flex: 1; padding: 5px; border: 1px solid #ccc; background: #fff;
             border-radius: 4px; cursor: pointer; font-size: 0.9rem;
@@ -289,6 +290,49 @@
             0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.7); }
             70% { box-shadow: 0 0 0 5px rgba(192, 57, 43, 0); }
             100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0); }
+        }
+		
+		/* --- 強制覆寫滑桿樣式 --- */
+        
+        /* 針對 Chrome, Safari, Edge (手機主要核心) */
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; /* 清除預設樣式 */
+            appearance: none;
+            
+            /* 設定圓球大小 */
+            width: 20px; 
+            height: 20px;
+            
+            /* 設定顏色 (使用您的主題紫色) */
+            background: #8e44ad; 
+            
+            /* 加個白邊讓它在深色背景更明顯 */
+            border: 2px solid #fff; 
+            border-radius: 50%; /* 變圓形 */
+            
+            /* 增加陰影增加立體感 */
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            
+            /* 修正垂直對齊 (視情況微調) */
+            margin-top: -8px; 
+        }
+
+        /* 針對 Firefox (備用) */
+        input[type=range]::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #8e44ad;
+            border: 2px solid #fff;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+
+        /* 順便把軌道 (Track) 也修飾一下，確保垂直置中 */
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px; /* 軌道細一點 */
+            background: #ddd;
+            border-radius: 2px;
         }
 
     </style>
