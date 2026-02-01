@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <title>晟自然輔助系統　虹吸現象探究</title>
+    
+    <style>
+        /* =========================================
+           1. 核心架構：App Shell
+           ========================================= */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            color: #333;
+        }
+
+        .app-layout-wrapper {
+            width: 100%;
+            max-width: 600px; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: transparent;
+        }
+
+        .main-header {
+            flex: 0 0 60px;
+            width: 100%;
+            background: linear-gradient(90deg, #1a2a6c, #b21f1f, #fdbb2d);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
+            color: white;
+        }
+
+        .logo-area {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-image: url('logo.jpg');
+            background-size: cover;
+            border: 2px solid #00d2ff;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 1.0rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            color: white;
+            flex: 1;                   
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .line-btn {
+            margin-left: auto;
+            background-color: #00B900;
+            color: white;
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+        .line-btn:active { transform: scale(0.95); background-color: #009900; }
+
+        .content-scroll-area {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            padding: 0;
+            padding-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 視覺模擬區 */
+        .simulation-container {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            margin-top: 10px;
+            min-height: 250px; 
+            background: transparent;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+		
+        .ui-card {
+            width: 96% !important;
+            max-width: 96% !important;
+            box-sizing: border-box;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            padding: 12px;
+        }
+
+        .topic-description {
+            text-align: center;
+            color: #444;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* =========================================
+           5. 底部控制塢
+           ========================================= */
+        .controls-dock {
+            flex: 0 0 auto;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            padding: 10px;
+            box-sizing: border-box;
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .action-btn:active { transform: scale(0.98); }
+
+        .reset-btn {
+            flex: 0 0 48px;
+            height: 48px;
+            border: none;
+            border-radius: 8px;
+            background: #6c757d;
+            color: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .reset-btn:active { transform: scale(0.95); background: #5a6268; }
+
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+        }
+
+        .group-left { background-color: rgba(66, 133, 244, 0.08); border-left: 4px solid #1a73e8; }
+        .group-right { background-color: rgba(234, 67, 53, 0.08); border-left: 4px solid #d93025; }
+
+        .group-title {
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-bottom: 0px;
+            display: flex;
+            justify-content: space-between;
+        }
+        .group-left .group-title { color: #1a73e8; }
+        .group-right .group-title { color: #d93025; }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            font-size: 0.85rem;
+            color: #444;
+        }
+        .slider-row label {
+            width: 45px;
+            flex-shrink: 0;
+            font-weight: bold;
+        }
+        .slider-row input {
+            flex: 1;
+            margin-left: 5px;
+        }
+
+        input[type=range] {
+            width: 100%;
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]:focus { outline: none; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 6px;
+            cursor: pointer;
+            background: #ccc;
+            border-radius: 3px;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            cursor: pointer;
+            -webkit-appearance: none;
+            margin-top: -7px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border: 2px solid white;
+        }
+        .group-left input[type=range]::-webkit-slider-thumb { background: #1a73e8; }
+        .group-right input[type=range]::-webkit-slider-thumb { background: #d93025; }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 15px;
+            background: #eee;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #666;
+            margin-top: 5px;
+            border: 1px solid #ddd;
+            transition: all 0.3s;
+        }
+        .status-badge.flowing { background: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .status-badge.broken { background: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .status-badge.air-flow { background: #e2e3e5; color: #383d41; border-color: #d6d8db; }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-layout-wrapper">
+        
+        <header class="main-header">
+            <a href="index.html" class="logo-area" title="返回大廳"></a>
+            <div class="header-title">晟自然輔助系統<br>虹吸現象</div>
+            
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="line-btn">
+                加 LINE 討論
+            </a>
+        </header>
+
+        <main class="content-scroll-area">
+            
+            <div class="ui-card topic-description">
+                <div id="status-display" class="status-badge">請按下方按鈕 「開始實驗」</div>
+                <div style="font-size: 0.85rem; color: #666; margin-top: 8px;">
+                    試著調整「杯子」與「管口」高低，觀察水流是否流動或停止？
+                </div>
+            </div>
+			
+			<div class="simulation-container" id="sim-container">
+                <canvas id="siphonCanvas" width="360" height="340"></canvas>
+            </div>
+
+        </main>
+
+        <footer class="controls-dock" id="controls-area">
+            
+            <div class="control-grid">
+                <div class="control-group group-left">
+                    <div class="group-title">左杯 (藍)</div>
+                    <div class="slider-row">
+                        <label>杯子</label>
+                        <input type="range" id="sl-left-cup" min="0" max="150" value="50">
+                    </div>
+                    <div class="slider-row">
+                        <label>管口</label>
+                        <input type="range" id="sl-left-tube" min="0" max="150" value="80">
+                    </div>
+                </div>
+
+                <div class="control-group group-right">
+                    <div class="group-title">右杯 (紅)</div>
+                    <div class="slider-row">
+                        <label>杯子</label>
+                        <input type="range" id="sl-right-cup" min="0" max="100" value="20">
+                    </div>
+                    <div class="slider-row">
+                        <label>管口</label>
+                        <input type="range" id="sl-right-tube" min="0" max="100" value="80">
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-row">
+                <button class="action-btn" id="prime-btn">水管充滿水</button>
+                <button class="reset-btn" id="reset-btn" title="重置">↺</button>
+            </div>
+		</footer>
+
+    </div>
+
+    <script>
+        // =========================================
+        // 晟自然核心：雙向虹吸模擬引擎 (物理修正版)
+        // =========================================
+        
+        const canvas = document.getElementById('siphonCanvas');
+        const ctx = canvas.getContext('2d');
+        const statusDisplay = document.getElementById('status-display');
+        const primeBtn = document.getElementById('prime-btn');
+        const resetBtn = document.getElementById('reset-btn');
+
+        // 輸入元件
+        const slLeftCup = document.getElementById('sl-left-cup');
+        const slLeftTube = document.getElementById('sl-left-tube');
+        const slRightCup = document.getElementById('sl-right-cup');
+        const slRightTube = document.getElementById('sl-right-tube');
+
+        // 系統參數
+        const CFG = {
+            baseY: 300,        // 地面 Y 軸
+            cupW: 70,
+            cupH: 100,
+            leftX: 50,
+            rightX: 240,
+            waterColor: 'rgba(50, 100, 220, 0.85)', 
+            flowK: 0.2         // 流速常數
+        };
+
+        // 狀態變數
+        let state = {
+            active: false,      
+            siphonBroken: true, 
+            
+            // Slider Values (0-100)
+            valHL: 50, valTL: 80,
+            valHR: 20, valTR: 80,
+
+            // 物理量
+            wL: 70, wR: 30,
+            
+            particles: [] 
+        };
+
+        function init() {
+            slLeftCup.addEventListener('input', updateInput);
+            slLeftTube.addEventListener('input', updateInput);
+            slRightCup.addEventListener('input', updateInput);
+            slRightTube.addEventListener('input', updateInput);
+            
+            primeBtn.addEventListener('click', toggleSim);
+            resetBtn.addEventListener('click', resetSim);
+
+            for(let i=0; i<25; i++) {
+                state.particles.push({ offset: Math.random(), speed: 0 });
+            }
+
+            updateInput();
+            requestAnimationFrame(loop);
+        }
+
+        function updateInput() {
+            state.valHL = parseInt(slLeftCup.value);
+            state.valTL = parseInt(slLeftTube.value);
+            state.valHR = parseInt(slRightCup.value);
+            state.valTR = parseInt(slRightTube.value);
+        }
+
+        function toggleSim() {
+            if (!state.active) {
+                state.active = true;
+                state.siphonBroken = false;
+                primeBtn.innerText = "停止實驗";
+                primeBtn.style.background = "#d9534f"; 
+            } else {
+                state.active = false;
+                state.siphonBroken = true;
+                primeBtn.innerText = "水管充滿水";
+                primeBtn.style.background = ""; 
+                statusDisplay.innerText = "實驗暫停";
+                statusDisplay.className = "status-badge";
+            }
+        }
+
+        function resetSim() {
+            slLeftCup.value = 50; slLeftTube.value = 80;
+            slRightCup.value = 20; slRightTube.value = 80;
+            state.wL = 70; state.wR = 30;
+            
+            state.active = false;
+            state.siphonBroken = true;
+            primeBtn.innerText = "水管充滿水";
+            primeBtn.style.background = "";
+            statusDisplay.innerText = "實驗已重置";
+            statusDisplay.className = "status-badge";
+            updateInput();
+        }
+		
+		// 新增這個函式：專門用來處理「自動停止」的 UI 行為
+		function autoStop() {
+			state.active = false; // 切斷物理計算
+			primeBtn.innerText = "水管充滿水"; // 按鈕文字變回
+			primeBtn.style.background = ""; // 按鈕顏色變回
+		}
+
+        function updatePhysics() {
+            // 計算物理座標 (Canvas Y: 小=高, 大=低)
+            let yBaseL = CFG.baseY - state.valHL;
+            let yBaseR = CFG.baseY - state.valHR;
+            
+            let ySurfL = yBaseL - state.wL;
+            let ySurfR = yBaseR - state.wR;
+            
+            // 管口座標 (Slider越大，管口越深/越低)
+            let cupTopL = yBaseL - CFG.cupH;
+            let cupTopR = yBaseR - CFG.cupH;
+            
+            // 管口 Y = 杯口 + (10 ~ H-5)
+            let tipYL = cupTopL - 30 + (state.valTL/100) * (CFG.cupH + 35);
+            let tipYR = cupTopR - 30 + (state.valTR/100) * (CFG.cupH + 35);
+			tipYL = Math.min(tipYL, yBaseL - 4); // 限制左管：不得低於左杯底上方 5px
+			tipYR = Math.min(tipYR, yBaseR - 4); // 限制右管：不得低於右杯底上方 5px
+
+            state.renderTipYL = tipYL;
+            state.renderTipYR = tipYR;
+            state.renderBaseYL = yBaseL;
+            state.renderBaseYR = yBaseR;
+
+            if (!state.active) return;
+
+            // ===========================================
+            // 物理判定修正區 (Physics Correction)
+            // ===========================================
+
+            // 1. 決定兩邊的「有效位能高度」(Effective Head)
+            // 規則：如果管口在水面下，位能=液面高度。
+            // 規則：如果管口在空氣中，位能=管口高度 (水會從這裡流掉)。
+            // 注意：Canvas Y 越小，位能越高。我們比較 Y 值。
+            
+            // 判斷左邊管口狀態
+            let isSubmergedL = (tipYL >= ySurfL) && (state.wL > 0);
+            let headL = isSubmergedL ? ySurfL : tipYL; 
+
+            // 判斷右邊管口狀態
+            let isSubmergedR = (tipYR >= ySurfR) && (state.wR > 0);
+            let headR = isSubmergedR ? ySurfR : tipYR;
+
+            // 2. 比較位能，決定流向
+            // diff > 0 代表 HeadR(Y大/低) - HeadL(Y小/高) > 0 => 左高右低 => L->R
+            let diff = headR - headL; 
+            let flow = 0;
+            let statusText = "";
+            let statusClass = "";
+
+            if (Math.abs(diff) < 0.5) {
+                // 平衡
+                statusText = "平衡：兩邊水位一樣高";
+                statusClass = "flowing";
+				autoStop();
+            } else if (diff > 0) {
+                // 左高右低 -> 往右流
+                // 【關鍵檢查】進水口(左)必須沒入水中，否則吸到空氣
+                if (isSubmergedL) {
+                    flow = diff * CFG.flowK * 0.1;
+                    statusText = "流向：左 ➔ 右";
+                    statusClass = "flowing";
+                    if (!isSubmergedR) {
+                         statusText += " (懸空流出)";
+                         statusClass = "air-flow";
+                    }
+                } else {
+                    // 左邊要吸水但管口懸空 -> 失效
+                    state.siphonBroken = true;
+                }
+            } else {
+                // 右高左低 -> 往左流
+                // 【關鍵檢查】進水口(右)必須沒入水中
+                if (isSubmergedR) {
+                    flow = diff * CFG.flowK * 0.1; // flow 為負
+                    statusText = "流向：左 ⬅ 右";
+                    statusClass = "flowing";
+                    if (!isSubmergedL) {
+                         statusText += " (懸空流出)";
+                         statusClass = "air-flow";
+                    }
+                } else {
+                    // 右邊要吸水但管口懸空 -> 失效
+                    state.siphonBroken = true;
+                }
+            }
+
+            // 3. 處理失效狀態
+            if (state.siphonBroken) {
+                statusDisplay.innerText = "停止：進氣口吸入空氣";
+                statusDisplay.className = "status-badge broken";
+                state.particles.forEach(p => p.speed = 0);
+				autoStop();
+                return;
+            }
+
+            // 4. 執行流動
+            // L -= flow (若flow正, L減); R += flow
+            state.wL -= flow;
+            state.wR += flow;
+
+            // 若某邊懸空且無水，水就流失了(消失)，不該加到杯子裡?
+            // 修正：如果出水端懸空(isSubmerged=false)，且液面比管口低，
+            // 水流出來是流到杯子裡。但如果杯子接不到? 
+            // 這裡假設杯子足夠寬，管子在杯口範圍內，所以水還是會掉進杯子裡。
+            // (為了模擬守恆，我們假設水都接住了)
+
+            state.wL = Math.max(0, Math.min(100, state.wL));
+            state.wR = Math.max(0, Math.min(100, state.wR));
+
+            statusDisplay.innerText = statusText;
+            statusDisplay.className = "status-badge " + statusClass;
+            
+            let speed = flow * 0.3;
+            state.particles.forEach(p => p.speed = speed);
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            let yBaseL = state.renderBaseYL;
+            let yBaseR = state.renderBaseYR;
+            let tipYL = state.renderTipYL;
+            let tipYR = state.renderTipYR;
+            
+            drawCup(CFG.leftX, yBaseL, state.wL, "#1a73e8");
+            drawCup(CFG.rightX, yBaseR, state.wR, "#d93025");
+            drawTube(tipYL, tipYR);
+        }
+
+        function drawCup(x, bottomY, waterH, color) {
+            let w = CFG.cupW;
+            let h = CFG.cupH;
+            let topY = bottomY - h;
+
+            if (waterH > 0) {
+                ctx.fillStyle = CFG.waterColor;
+                ctx.fillRect(x, bottomY - waterH, w, waterH);
+            }
+            
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x, topY);
+            ctx.lineTo(x, bottomY);
+            ctx.lineTo(x + w, bottomY);
+            ctx.lineTo(x + w, topY);
+            ctx.stroke();
+            
+            ctx.fillStyle = "#888";
+            ctx.fillRect(x - 5, CFG.baseY, w + 10, 4);
+            ctx.fillStyle = "#bbb";
+            ctx.fillRect(x + w/2 - 4, bottomY, 8, CFG.baseY - bottomY);
+        }
+
+        function drawTube(tipYL, tipYR) {
+            let p1 = { x: CFG.leftX + CFG.cupW - 15, y: tipYL };
+            let highestObjY = Math.min(tipYL, tipYR, CFG.baseY - state.valHL - CFG.cupH, CFG.baseY - state.valHR - CFG.cupH);
+            let topY = highestObjY - 30; 
+			topY = Math.max(10, topY);
+            if (topY > CFG.baseY - 150) topY = CFG.baseY - 150;
+
+            let p2 = { x: p1.x, y: topY };
+            let p3 = { x: CFG.rightX + 15, y: topY };
+            let p4 = { x: p3.x, y: tipYR };
+
+            ctx.beginPath();
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            ctx.lineWidth = 12;
+            
+            if (state.active && !state.siphonBroken) {
+                ctx.strokeStyle = CFG.waterColor; 
+            } else {
+                ctx.strokeStyle = "rgba(200, 220, 230, 0.3)"; 
+            }
+            
+            ctx.moveTo(p1.x, p1.y);
+            ctx.lineTo(p2.x, p2.y);
+            ctx.lineTo(p3.x, p3.y);
+            ctx.lineTo(p4.x, p4.y);
+            ctx.stroke();
+
+            if (state.active && !state.siphonBroken) {
+                drawFlowParticles(p1, p2, p3, p4);
+            }
+
+            ctx.lineWidth = 14;
+            ctx.strokeStyle = "rgba(0,0,0,0.3)";
+            ctx.globalCompositeOperation = "destination-over";
+            ctx.stroke();
+            ctx.globalCompositeOperation = "source-over";
+            
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(255,255,255,0.4)";
+            ctx.stroke();
+        }
+
+        function drawFlowParticles(p1, p2, p3, p4) {
+            let d1 = Math.abs(p2.y - p1.y);
+            let d2 = Math.abs(p3.x - p2.x);
+            let d3 = Math.abs(p4.y - p3.y);
+            let totalLen = d1 + d2 + d3;
+
+            ctx.fillStyle = "rgba(255, 255, 255, 0.9)"; 
+
+            state.particles.forEach(pt => {
+                pt.offset += pt.speed;
+                if (pt.offset > 1) pt.offset -= 1;
+                if (pt.offset < 0) pt.offset += 1;
+
+                let currDist = pt.offset * totalLen;
+                let x, y;
+
+                if (currDist < d1) {
+                    let r = currDist / d1;
+                    x = p1.x;
+                    y = p1.y + (p2.y - p1.y) * r;
+                } else if (currDist < d1 + d2) {
+                    let r = (currDist - d1) / d2;
+                    x = p2.x + (p3.x - p2.x) * r;
+                    y = p2.y;
+                } else {
+                    let r = (currDist - d1 - d2) / d3;
+                    x = p3.x;
+                    y = p3.y + (p4.y - p3.y) * r;
+                }
+
+                ctx.beginPath();
+                ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+                ctx.fill();
+            });
+        }
+
+        function loop() {
+            updatePhysics();
+            draw();
+            requestAnimationFrame(loop);
+        }
+
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
