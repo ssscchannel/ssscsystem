@@ -3,116 +3,173 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <title>晟自然輔助系統　感應起電</title>
     
     <style>
         /* =========================================
-           1. 全局設定：強制一頁式 (No Scroll) - 繼承自專案A
+           1. 核心架構：App Shell (固定視窗) - Template
            ========================================= */
         :root {
-            --ground-color: #27ae60; /* 專案B 特有的接地色 */
+            --ground-color: #27ae60; /* 專案B 特有變數 */
         }
 
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100vh;   
             height: 100dvh;  
             overflow: hidden; 
             
             display: flex;
             flex-direction: column;
-            align-items: center; 
+            align-items: center;
             
             background-image: url('page.jpg'); 
             background-size: cover;
             background-position: center;
-            background-color: #000;
             font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
-            touch-action: none; /* 禁止預設觸控行為 */
-            user-select: none;  /* 禁止選取文字 */
+            color: #333;
+            /* 禁止選取與縮放 */
+            touch-action: none; 
+            user-select: none;  
+        }
+
+        .app-layout-wrapper {
+            width: 100%;
+            max-width: 600px; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: transparent;
         }
 
         /* =========================================
-           2. 標準標題區 (Header Container) - 繼承自專案A
+           2. 頂部：標題列 (固定)
            ========================================= */
-        .header-container {
-            flex-shrink: 0;
-            width: 97%;
+        .main-header {
+            flex: 0 0 60px;
+            width: 100%;
+            background: linear-gradient(90deg, #1a2a6c, #b21f1f, #fdbb2d);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
             box-sizing: border-box;
-            max-width: 800px;
-            
-            display: flex;
-            justify-content: space-between; 
-            align-items: center;
-            
-            padding: 8px 15px;
-            margin-top: 5px;
-            margin-bottom: 8px;
-            
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
+            color: white;
         }
 
-        .header-container h1 {
-            margin: 0;
-            font-size: 1.1rem;
-            color: #333;
-            line-height: 1.3;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
+        .logo-area {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-image: url('logo.jpg');
+            background-size: cover;
+            border: 2px solid #00d2ff;
+            flex-shrink: 0;
+            cursor: pointer;
         }
 
-        .title-logo {
-            height: 36px;
-            width: auto;
-            border-radius: 4px;
+        .header-title {
+            font-size: 1.0rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            color: white;
+            white-space: normal;
+            line-height: 1.2;          
+            max-height: 2.4em;         
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex: 1;                   
+            padding-right: 10px;       
         }
 
-        .header-btn {
+        .line-btn {
+            margin-left: auto;
+            background-color: #00B900;
+            color: white;
             text-decoration: none;
-            display: inline-flex;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            flex-shrink: 0;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 6px 12px;
-            background: #06c755;
-            color: white;
-            font-size: 0.9rem;
-            font-weight: bold;
-            border-radius: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: transform 0.1s, background 0.2s;
             white-space: nowrap;
         }
         
-        .header-btn:active {
+        .line-btn:active {
             transform: scale(0.95);
-        }
-
-        .header-btn span {
-            margin-right: 4px;
+            background-color: #009900;
         }
 
         /* =========================================
-           3. 中間模擬區 (Main Simulation)
+           3. 中間：內容區 (可滾動)
            ========================================= */
-        #sim-container {
-            flex: 1; 
+        .content-scroll-area {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             width: 100%;
+            padding: 0;
+            padding-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ui-card {
+            width: 96% !important;
+            max-width: 96% !important;
+            box-sizing: border-box;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 15px;
+            
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 12px;
+        }
+
+        .topic-description {
+            text-align: center;
+            color: #444;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* =========================================
+           4. 模擬區與專屬樣式 (移植自專案B)
+           ========================================= */
+        .simulation-container {
+            width: 100%;
+            /* 強制高度，確保模擬操作區夠大 */
+            height: 60vh; 
+            min-height: 350px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             position: relative;
-            overflow: hidden;
+            margin-top: 5px;
+            background: transparent;
+            overflow: hidden; /* 防止 canvas 溢出 */
         }
 
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* 浮動提示標籤 - 基礎樣式繼承自 A，但在下方擴充 B 的狀態 */
+        /* 浮動提示標籤 */
         .instruction-tag {
             position: absolute;
             top: 20px;
@@ -133,7 +190,6 @@
             z-index: 10;
         }
 
-        /* --- 專案B 特有狀態樣式整合 --- */
         .instruction-tag.step-active {
             color: #2c3e50;
             border-color: #3498db;
@@ -149,31 +205,26 @@
         }
 
         /* =========================================
-           4. 底部控制區 (Footer Controls) - 嚴格統一版
+           5. 底部控制塢 (整合專案B的控制列)
            ========================================= */
-        .controls {
+        .controls-dock {
             flex: 0 0 auto;
             width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            padding: 10px 15px;
             box-sizing: border-box;
             
-            /* 統一高度與背景 */
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            border-top: 1px solid rgba(0,0,0,0.1);
-            
-            /* 統一內距：上下 10px，左右 15px */
-            padding: 10px 15px;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            /* 底部安全區 */
+            padding-bottom: calc(10px + env(safe-area-inset-bottom));
             
             display: flex;
-            justify-content: space-between;
+            justify-content: center; /* 控制列置中 */
             align-items: center;
-            z-index: 1000;
         }
 
-        .controls-left { display: flex; align-items: center; }
-        .controls-right { display: flex; align-items: center; }
-
+        /* 移植過來的控制元件樣式 */
         .switch-capsule {
             display: inline-flex;
             align-items: center;
@@ -182,10 +233,9 @@
             border-radius: 100px;
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
             padding: 5px 15px; 
-            gap: 10px; /* 統一間距 */
+            gap: 10px;
         }
 
-        /* 統一所有功能按鈕為圓形 44px */
         .btn-toggle {
             width: 44px; height: 44px;
             border: none; border-radius: 50%;
@@ -194,90 +244,56 @@
             background: transparent; color: #bdc3c7;
             display: flex; align-items: center; justify-content: center;
             transition: all 0.2s;
-            flex-shrink: 0; /* 禁止被壓縮 */
+            flex-shrink: 0;
+            padding: 0; /* 重置 padding */
         }
         
         .btn-toggle:active { transform: scale(0.95); }
         
-        /* 正負電按鈕狀態 */
         .btn-toggle.active-neg { background: #3498db; color: white; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
         .btn-toggle.active-pos { background: #e74c3c; color: white; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); }
         
-        /* 接地按鈕狀態 (專案B專用) */
         .btn-toggle.active-ground { 
             background: var(--ground-color); 
             color: white; 
             box-shadow: 0 4px 12px rgba(39, 174, 96, 0.5); 
         }
 
-        /* 重置按鈕微調 (專案B專用) */
-        .btn-reset-icon {
-            font-size: 1.4rem;
-            color: #e74c3c;
-        }
+        .btn-reset-icon { font-size: 1.4rem; color: #e74c3c; }
         .btn-reset-icon:hover { background: rgba(231, 76, 60, 0.1); }
 
         .deck-label { font-size: 0.9rem; font-weight: 700; color: #666; white-space: nowrap; margin-right: 5px; }
         .divider { width: 1px; height: 24px; background: #cbd5e0; margin: 0 2px; }
 
-        /* 返回按鈕統一 */
-        .btn-return {
-            width: 44px; height: 44px;
-            border-radius: 50%;
-            background: #fff;
-            color: #555;
-            display: flex; align-items: center; justify-content: center;
-            text-decoration: none;
-            font-size: 1.4rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            border: 1px solid rgba(0,0,0,0.05);
-            transition: all 0.2s;
-        }
-        .btn-return:active { transform: scale(0.9); background: #f0f0f0; }
-
-        /* RWD: 手機直式時，標題過長自動換行 */
-        .mobile-break { display: none; }
-        
-        @media (max-width: 600px) {
-            .mobile-break { display: block; height: 0; }
-            .header-container h1 { font-size: 1rem; }
-            .header-btn { padding: 5px 10px; font-size: 0.85rem; }
-            .header-btn span { display: none; } /* 手機版太窄時，隱藏手指圖示 */
-			.instruction-bar {
-    			font-size: 0.8rem; /* 手機字體縮小 */
-				padding: 5px 15px;
-				width: 90%; /* 手機上寬度稍微放寬 */
-				margin-top: 5px; /* 手機版不使用負邊距，避免太擁擠 */
-				margin-bottom: 10px;
-				flex-direction: row; /* 保持水平排列 */
-				flex-wrap: nowrap; /* 盡量不換行，若字太多會自動縮小 */
-				}
-        }
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>
-            <img src="logo.jpg" alt="Logo" class="title-logo" onerror="this.style.display='none'">
-            <div>
-                晟自然輔助系統　感應起電
+    <div class="app-layout-wrapper">
+        
+        <header class="main-header">
+            <a href="index.html" class="logo-area" title="返回大廳"></a>
+            <div class="header-title">晟自然輔助系統<br>感應起電</div>
+            
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="line-btn">
+                加 LINE 討論
+            </a>
+        </header>
+
+        <main class="content-scroll-area">
+            
+            <div class="simulation-container" id="sim-container">
+                <div class="instruction-tag" id="infoTag">步驟1：請拖曳帶電棒靠近金屬球</div>
+                <canvas id="simCanvas"></canvas>
             </div>
-        </h1>
-        <div class="nav-buttons">
-            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="header-btn">
-                <span>👉</span>加 LINE 提問
-            </a>       
-        </div>
-    </div>
+            
+            <div class="ui-card topic-description">
+                <b>操作說明：</b>拖曳帶電棒靠近金屬球，觀察電荷分離現象。適時點擊下方「接地」按鈕，觀察電子流向。
+            </div>
 
-    <div id="sim-container">
-        <div class="instruction-tag" id="infoTag">步驟1：請拖曳帶電棒靠近金屬球</div>
-        <canvas id="simCanvas"></canvas>
-    </div>
+        </main>
 
-    <div class="controls">
-        <div class="controls-left">
+        <footer class="controls-dock" id="controls-area">
             <div class="switch-capsule">
                 <span class="deck-label">帶電棒</span>
                 
@@ -294,17 +310,13 @@
                     ↺
                 </button>
             </div>
-        </div>
+        </footer>
 
-        <div class="controls-right">
-            <a href="index.html" class="btn-return" title="返回實驗室">↩</a>
-        </div>
     </div>
 
     <script>
         /**
-         * Project B: Induction Charging (Formatted for Unified System)
-         * 邏輯與物理運算完全保留，僅針對 DOM 容器 ID 與 Resize 方式進行適配。
+         * Project B: Induction Charging (Integrated into Template)
          */
         const APP = {
             canvas: null,
@@ -342,26 +354,23 @@
             },
 
             init: function() {
-                // 修改：適配新架構的容器 ID
                 this.wrapper = document.getElementById('sim-container');
                 this.canvas = document.getElementById('simCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.dpr = window.devicePixelRatio || 1;
 
-                // 保持原有的事件綁定
                 const bind = (evts, handler) => evts.forEach(e => this.canvas.addEventListener(e, handler, {passive: false}));
                 bind(['mousedown', 'mousemove', 'mouseup', 'mouseleave'], e => this.handleMouse(e));
                 bind(['touchstart', 'touchmove', 'touchend'], e => this.handleTouch(e));
                 
-                // 增加視窗 Resize 監聽
                 window.addEventListener('resize', () => this.resize());
 
                 this.resize();
                 this.loop();
+                console.log("感應起電模擬初始化完成");
             },
 
             resize: function() {
-                // 修改：改為讀取 flex 容器的大小，以支援全螢幕適配
                 const rect = this.wrapper.getBoundingClientRect();
                 this.width = rect.width;
                 this.height = rect.height;
@@ -370,12 +379,19 @@
                 this.canvas.height = this.height * this.dpr;
                 this.ctx.scale(this.dpr, this.dpr);
 
-                // 物理位置計算維持原邏輯，但基準點改為動態中心
+                // 紀錄舊的比例位置，避免 Resize 時帶電棒位置跑掉
+                let oldRodXRatio = 0.85;
+                let oldRodYRatio = 0.85;
+                if(this.rod.x !== 0 && this.conductor.x !== 0) {
+                     // 簡單保護：如果不是初次執行，則嘗試保持相對位置
+                     // 但為了簡單起見，Resize 後我們將帶電棒復位到安全區域，避免卡在牆外
+                     // 或者保持現有邏輯，僅重新計算物理中心
+                }
+
                 this.conductor.x = this.width / 2;
-                this.conductor.y = this.height / 2 - 60; 
-                this.CONFIG.groundY = this.height - 40; 
+                this.conductor.y = this.height / 2 - 40; // 稍微上移以適應下方控制列
+                this.CONFIG.groundY = this.height - 20; 
                 
-                // 縮放比例計算
                 let scale = Math.min(this.width, this.height) / 400;
                 this.conductor.r = this.CONFIG.radiusBase * scale;
                 this.CONFIG.wireX = this.conductor.x + this.conductor.r + 30; 
@@ -385,10 +401,17 @@
                     W: this.CONFIG.rodW * scale
                 };
 
+                // 若是初始化或重置狀態
                 if (this.protons.length === 0) {
                     this.initParticles();
                     this.rod.x = this.width * 0.85; 
                     this.rod.y = this.height * 0.85;
+                } else {
+                    // Resize 時確保帶電棒不遺失，強制歸位到右下角安全區 (UX 優化)
+                    // 也可以選擇不變動，但在不同長寬比切換時會有風險。這裡選擇保守策略。
+                    // 這裡僅進行邊界檢查
+                    if(this.rod.x > this.width) this.rod.x = this.width - 50;
+                    if(this.rod.y > this.height) this.rod.y = this.height - 50;
                 }
             },
 
@@ -396,6 +419,7 @@
                 this.state.isGrounded = false;
                 this.state.flowTimer = 0;
                 this.flowParticles = [];
+                // 重置位置
                 this.rod.x = this.width * 0.85;
                 this.rod.y = this.height * 0.85;
                 this.rod.angle = -Math.PI/4;
@@ -445,7 +469,6 @@
 
                 this.updateGroundingLogic();
 
-                // 使用動態寬度計算物理參數
                 const scale = this.width / 400;
                 const pR = this.CONFIG.particleSize * scale;
                 
@@ -455,14 +478,11 @@
 
                 this.particles.forEach((p) => {
                     let fx = 0, fy = 0;
-                    
                     let dx = p.x - tipX;
                     let dy = p.y - tipY;
                     let distSq = dx*dx + dy*dy;
-                    
                     let minD = (this.rod.charge === 1) ? 60 : 100;
                     if (distSq < minD) distSq = minD;
-                    
                     let rodF = rodForceBase / distSq;
                     let dist = Math.sqrt(distSq);
 
@@ -481,7 +501,6 @@
                         let od2 = odx*odx + ody*ody;
                         let od = Math.sqrt(od2);
                         if (od < 0.1) od = 0.1;
-                        
                         let repF = selfForceBase / (od2 + 10);
                         fx += (odx/od) * repF;
                         fy += (ody/od) * repF;
@@ -495,7 +514,6 @@
                         p.vx = (p.vx/speed)*8;
                         p.vy = (p.vy/speed)*8;
                     }
-
                     p.x += p.vx;
                     p.y += p.vy;
                 });
@@ -512,8 +530,7 @@
                             let ang = Math.atan2(cdy, cdx);
                             p.x = this.conductor.x + limitR * Math.cos(ang);
                             p.y = this.conductor.y + limitR * Math.sin(ang);
-                            p.vx *= 0.1; 
-                            p.vy *= 0.1;
+                            p.vx *= 0.1; p.vy *= 0.1;
                         }
 
                         for (let j = i + 1; j < this.particles.length; j++) {
@@ -535,7 +552,6 @@
                         }
                     });
                 }
-
                 this.updateFlowParticles();
                 this.updateInstruction();
             },
@@ -571,11 +587,9 @@
                 let startY = (dir === 'up') ? this.CONFIG.groundY : this.conductor.y;
                 
                 this.flowParticles.push({
-                    x: wireX,
-                    y: startY,
+                    x: wireX, y: startY,
                     vy: (dir === 'up') ? -20 : 20, 
-                    dir: dir,
-                    active: true
+                    dir: dir, active: true
                 });
             },
 
@@ -583,7 +597,6 @@
                 for(let i = this.flowParticles.length-1; i>=0; i--) {
                     let p = this.flowParticles[i];
                     p.y += p.vy;
-                    
                     let hitSphere = (p.dir === 'up' && p.y <= this.conductor.y);
                     let hitGround = (p.dir === 'down' && p.y >= this.CONFIG.groundY);
 
@@ -599,7 +612,6 @@
                             p.active = false;
                         }
                     }
-
                     if (p.y < this.conductor.y - 100 || p.y > this.CONFIG.groundY + 100 || !p.active) {
                         this.flowParticles.splice(i, 1);
                     }
@@ -645,7 +657,6 @@
                 if (!grounded && level >= 0.2 && eCount !== 4) {
                     msg = "步驟4：請移開帶電棒";
                 }
-
                 if (tag.innerText !== msg) tag.innerText = msg;
                 tag.className = className;
             },
@@ -659,8 +670,7 @@
             updateUI: function() {
                 const btn = document.getElementById('btnGround');
                 if (this.state.isGrounded) {
-                    btn.classList.add('active-ground'); // 使用新的 active-ground 類別
-                    // 移除文字修改，保持圖示
+                    btn.classList.add('active-ground');
                 } else {
                     btn.classList.remove('active-ground');
                 }
@@ -668,25 +678,19 @@
 
             draw: function() {
                 this.ctx.clearRect(0, 0, this.width, this.height);
-                
                 this.drawFloor();
                 this.drawConductor(); 
-                
-                if (this.state.isGrounded) {
-                    this.drawGroundSystem();
-                }
+                if (this.state.isGrounded) this.drawGroundSystem();
                 
                 this.protons.forEach(p => this.drawCharge(p.x, p.y, '#e74c3c', '+'));
                 this.particles.forEach(p => this.drawCharge(p.x, p.y, '#3498db', '-'));
                 this.flowParticles.forEach(p => this.drawCharge(p.x, p.y, '#3498db', '-'));
-
                 this.drawRod();
             },
 
             drawFloor: function() {
                 const y = this.CONFIG.groundY;
                 this.ctx.lineCap = 'butt';
-                
                 this.ctx.beginPath();
                 this.ctx.moveTo(0, y);
                 this.ctx.lineTo(this.width, y);
@@ -723,7 +727,6 @@
 
                 this.ctx.strokeStyle = '#000000'; 
                 this.ctx.lineWidth = 4;
-                
                 this.ctx.beginPath();
                 this.ctx.moveTo(wireX, y);
                 this.ctx.lineTo(wireX, y + 15);
@@ -756,15 +759,11 @@
                 if (this.state.isGrounded) {
                     let chars = [];
                     let arrow = "";
-                    
                     if (this.rod.charge === 1) { 
-                        chars = ["電","子","從","地","球","流","入"];
-                        arrow = "↑";
+                        chars = ["電","子","從","地","球","流","入"]; arrow = "↑";
                     } else { 
-                        chars = ["電","子","從","金","屬","球","流","出"];
-                        arrow = "↓";
+                        chars = ["電","子","從","金","屬","球","流","出"]; arrow = "↓";
                     }
-                    
                     if (chars.length > 0) {
                         this.ctx.fillStyle = "#2c3e50"; 
                         this.ctx.font = "bold 24px 'Microsoft JhengHei', Arial"; 
@@ -778,7 +777,6 @@
                         for(let i=0; i<chars.length; i++) {
                             this.ctx.fillText(chars[i], textX, startY + i*28);
                         }
-                        
                         this.ctx.fillStyle = "#e74c3c"; 
                         this.ctx.font = "bold 40px Arial";
                         this.ctx.fillText(arrow, wireX + 40, centerY);
@@ -788,7 +786,6 @@
 
             drawConductor: function() {
                 const {x, y, r} = this.conductor;
-                
                 this.ctx.fillStyle = '#5d4037'; 
                 let baseW = 80;
                 let baseH = 15;
@@ -843,7 +840,18 @@
                 
                 this.ctx.fillStyle = (this.rod.charge < 0) ? '#34495e' : 'rgba(236, 240, 241, 0.95)';
                 this.ctx.beginPath();
-                this.ctx.roundRect(-L/2, -W/2, L, W, W/2);
+                // [Essential Fix]: Replaced roundRect with standard arc/lineTo for compatibility
+                const radius = W / 2;
+                this.ctx.moveTo(-L/2 + radius, -W/2);
+                this.ctx.lineTo(L/2 - radius, -W/2);
+                this.ctx.quadraticCurveTo(L/2, -W/2, L/2, -W/2 + radius);
+                this.ctx.lineTo(L/2, W/2 - radius);
+                this.ctx.quadraticCurveTo(L/2, W/2, L/2 - radius, W/2);
+                this.ctx.lineTo(-L/2 + radius, W/2);
+                this.ctx.quadraticCurveTo(-L/2, W/2, -L/2, W/2 - radius);
+                this.ctx.lineTo(-L/2, -W/2 + radius);
+                this.ctx.quadraticCurveTo(-L/2, -W/2, -L/2 + radius, -W/2);
+                
                 this.ctx.fill();
                 this.ctx.strokeStyle = '#bdc3c7';
                 this.ctx.lineWidth = 1;
@@ -875,7 +883,6 @@
                     this.ctx.lineTo(-L/2 + 10 + i*10, W/2);
                     this.ctx.stroke();
                 }
-
                 this.ctx.restore();
             },
 
@@ -935,7 +942,6 @@
                 let tipX = targetX + Math.cos(angle) * halfL;
                 let tipY = targetY + Math.sin(angle) * halfL;
 
-                // 邊界檢查
                 tipX = Math.max(0, Math.min(this.width, tipX));
                 tipY = Math.max(0, Math.min(this.height, tipY));
 
@@ -967,9 +973,7 @@
             }
         };
 
-        window.onload = function() {
-            APP.init();
-        };
+        window.addEventListener('load', () => APP.init());
 
     </script>
 </body>

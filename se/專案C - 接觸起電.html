@@ -3,113 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
     <title>晟自然輔助系統　接觸起電</title>
     
     <style>
         /* =========================================
-           1. 全局設定：強制一頁式 (No Scroll) - 來自專案A
+           1. 核心架構：App Shell (繼承自 template.html)
            ========================================= */
         html, body {
             margin: 0;
             padding: 0;
             width: 100%;
-            height: 100vh;   
-            height: 100dvh;  /* Mobile Safari 底部對齊優化 */
+            height: 100dvh;  
             overflow: hidden; 
             
             display: flex;
             flex-direction: column;
-            align-items: center; 
+            align-items: center;
             
             background-image: url('page.jpg'); 
             background-size: cover;
             background-position: center;
-            background-color: #2c3e50;
             font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
-            touch-action: none; /* 禁止瀏覽器預設觸控行為 */
-            user-select: none;  /* 禁止選取文字 */
+            color: #333;
+            user-select: none; /* 禁止選取，優化體驗 */
+        }
+
+        .app-layout-wrapper {
+            width: 100%;
+            max-width: 600px; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: transparent;
         }
 
         /* =========================================
-           2. 標準標題區 (Header Container) - 來自專案A
+           2. 頂部：標題列
            ========================================= */
-        .header-container {
-            flex-shrink: 0;
-            width: 97%;
+        .main-header {
+            flex: 0 0 60px; 
+            width: 100%;
+            background: linear-gradient(90deg, #1a2a6c, #b21f1f, #fdbb2d);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
             box-sizing: border-box;
-            max-width: 800px;
-            
-            display: flex;
-            justify-content: space-between; 
-            align-items: center;
-            
-            padding: 8px 15px;
-            margin-top: 5px;
-            margin-bottom: 8px;
-            
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            border-radius: 12px;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-            z-index: 1000;
+            color: white;
         }
 
-        .header-container h1 {
-            margin: 0;
-            font-size: 1.1rem;
-            color: #333;
-            line-height: 1.3;
-            font-weight: 700;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            white-space: nowrap;
+        .logo-area {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-image: url('logo.jpg');
+            background-size: cover;
+            border: 2px solid #00d2ff;
+            flex-shrink: 0; 
         }
 
-        .title-logo {
-            height: 36px;
-            width: auto;
-            border-radius: 4px;
+        .header-title {
+            font-size: 1.0rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            color: white;
+            white-space: normal;
+            line-height: 1.2;          
+            max-height: 2.4em;         
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex: 1;                   
+            padding-right: 10px;       
         }
 
-        .header-btn {
+        .line-btn {
+            margin-left: auto;
+            background-color: #06c755; /* 使用原專案綠色 */
+            color: white;
             text-decoration: none;
-            display: inline-flex;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            flex-shrink: 0;
+            display: flex;
             align-items: center;
             justify-content: center;
-            padding: 6px 12px;
-            background: #06c755; 
-            color: white;
-            font-size: 0.9rem;
-            font-weight: bold;
-            border-radius: 20px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-            transition: transform 0.1s, background 0.2s;
             white-space: nowrap;
         }
         
-        .header-btn:active {
-            transform: scale(0.95);
-        }
-
-        .header-btn span {
-            margin-right: 4px;
+        .line-btn:active {
+            transform: scale(0.95); 
         }
 
         /* =========================================
-           3. 中間模擬區 (Main Simulation) - 自動填滿
+           3. 中間：內容區
            ========================================= */
-        #sim-container {
-            flex: 1; 
+        .content-scroll-area {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
             width: 100%;
+            padding: 0;
+            padding-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* 3-1. 視覺模擬區容器 (Target) */
+        .simulation-container {
+            width: 100%;
+            flex: 1; /* 讓模擬區盡可能佔滿剩餘空間 */
+            min-height: 300px; /* 保證最小操作空間 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
             position: relative;
+            margin-top: 0; /* 貼合頂部 */
             overflow: hidden;
             cursor: pointer;
         }
 
         canvas { display: block; width: 100%; height: 100%; }
 
-        /* 浮動提示標籤 */
+        /* --- 移植專案C元件：浮動提示標籤 --- */
         .instruction-tag {
             position: absolute;
             top: 20px;
@@ -143,33 +170,50 @@
             box-shadow: 0 4px 20px rgba(230, 126, 34, 0.4);
         }
 
+        /* 通用卡片 (保留但預設不顯示，除非有內容) */
+        .ui-card {
+            width: 96% !important;
+            max-width: 96% !important;
+            box-sizing: border-box;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 12px;
+        }
+
+        .topic-description {
+            text-align: center;
+            color: #444;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin-top: 10px;
+            margin-bottom: 5px;
+        }
+
         /* =========================================
-           4. 底部控制區 (Footer Controls) - 來自專案A
+           4. 底部控制塢 (Dock)
            ========================================= */
-        .controls {
+        .controls-dock {
             flex: 0 0 auto;
             width: 100%;
-            box-sizing: border-box;
-            
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(5px);
-            border-top: 1px solid rgba(0,0,0,0.1);
-            
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
             padding: 10px 15px;
-            padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+            box-sizing: border-box;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
             
             display: flex;
-            justify-content: space-between;
+            flex-direction: column;
             align-items: center;
-            z-index: 1000;
+            justify-content: center;
         }
 
-        .controls-left, .controls-right {
-            display: flex;
-            align-items: center;
-        }
-
-        /* 膠囊開關樣式 */
+        /* --- 移植專案C元件：膠囊開關 --- */
         .switch-capsule {
             display: inline-flex;
             align-items: center;
@@ -177,8 +221,8 @@
             background: #f1f3f5;
             border-radius: 100px;
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.06);
-            padding: 5px 15px;  /* 改回 15px，讓左右寬鬆一點 */
-            gap: 10px;          /* 改回 10px，讓按鈕之間不那麼擠 */
+            padding: 5px 15px;
+            gap: 10px;
         }
 
         .btn-toggle {
@@ -189,96 +233,64 @@
             background: transparent; color: #bdc3c7;
             display: flex; align-items: center; justify-content: center;
             transition: all 0.2s;
-            flex-shrink: 0; /* 關鍵：加入這行，禁止按鈕變形 */
+            flex-shrink: 0;
+            outline: none;
         }
         .btn-toggle:active { transform: scale(0.95); }
         .btn-toggle.active-neg { background: #3498db; color: white; box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4); }
         .btn-toggle.active-pos { background: #e74c3c; color: white; box-shadow: 0 4px 12px rgba(231, 76, 60, 0.4); }
         
-        /* 特製：重置按鈕 (整合進膠囊) */
         .btn-reset {
-            font-size: 1.4rem; /* 原本是 1.2rem，改大一點對齊 B */
+            font-size: 1.4rem;
             color: #e74c3c;
             width: 44px; height: 44px;
         }
 
-        /* --- 修改 3：標籤樣式微調 (移除 margin-left，由 gap 統一控制) --- */
         .deck-label { 
             font-size: 0.9rem; 
             font-weight: 700; 
             color: #666; 
             white-space: nowrap; 
             margin-right: 5px; 
-            /* 移除原本的 margin-left: 5px，交給 gap 控制 */
         }
         
-        /* --- 修改 4：分隔線樣式 (統一 margin) --- */
         .divider { 
             width: 1px; 
             height: 24px; 
             background: #cbd5e0; 
-            margin: 0 2px; /* 統一為 2px，原本是 5px */
+            margin: 0 2px;
         }
 
-        /* 返回按鈕 */
-        .btn-return {
-            width: 44px; height: 44px;
-            border-radius: 50%;
-            background: #fff;
-            color: #555;
-            display: flex; align-items: center; justify-content: center;
-            text-decoration: none;
-            font-size: 1.4rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-            border: 1px solid rgba(0,0,0,0.05);
-            transition: all 0.2s;
-        }
-        .btn-return:active { transform: scale(0.9); background: #f0f0f0; }
-
-        /* RWD: 手機直式時，標題過長自動換行 */
-        .mobile-break { display: none; }
-        
-        @media (max-width: 600px) {
-            .mobile-break { display: block; height: 0; }
-            .header-container h1 { font-size: 1rem; }
-            .header-btn { padding: 5px 10px; font-size: 0.85rem; }
-            .header-btn span { display: none; } /* 手機版太窄時，隱藏手指圖示 */
-			.instruction-bar {
-    			font-size: 0.8rem; /* 手機字體縮小 */
-				padding: 5px 15px;
-				width: 90%; /* 手機上寬度稍微放寬 */
-				margin-top: 5px; /* 手機版不使用負邊距，避免太擁擠 */
-				margin-bottom: 10px;
-				flex-direction: row; /* 保持水平排列 */
-				flex-wrap: nowrap; /* 盡量不換行，若字太多會自動縮小 */
-				}
-        }
-        
     </style>
 </head>
 <body>
 
-    <div class="header-container">
-        <h1>
-            <img src="logo.jpg" alt="Logo" class="title-logo" onerror="this.style.display='none'">
-            <div>
-                晟自然輔助系統　接觸起電
+    <div class="app-layout-wrapper">
+        
+        <header class="main-header">
+            <a href="index.html" class="logo-area" title="返回大廳"></a>
+            <div class="header-title">晟自然輔助系統<br>接觸起電</div>
+            
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="line-btn">
+                加 LINE 討論
+            </a>
+        </header>
+
+        <main class="content-scroll-area">
+            
+            <div class="ui-card topic-description">
+                本模擬展示靜電感應與接觸起電的微觀過程。<br>
+                請拖曳帶電棒「靠近」或「接觸」金屬球觀察電荷移動。
             </div>
-        </h1>
-        <div class="nav-buttons">
-            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="header-btn">
-                <span>👉</span>加 LINE 提問
-            </a>       
-        </div>
-    </div>
+			
+			<div class="simulation-container" id="sim-container">
+                <div class="instruction-tag" id="infoTag">請將帶電棒「靠近」金屬球</div>
+                <canvas id="simCanvas"></canvas>
+            </div>
+            
+            </main>
 
-    <div id="sim-container">
-        <div class="instruction-tag" id="infoTag">請將帶電棒「靠近」金屬球</div>
-        <canvas id="simCanvas"></canvas>
-    </div>
-
-    <div class="controls">
-        <div class="controls-left">
+        <footer class="controls-dock" id="controls-area">
             <div class="switch-capsule">
                 <span class="deck-label">帶電棒</span>
                 
@@ -289,17 +301,14 @@
                 
                 <button class="btn-toggle btn-reset" onclick="APP.reset()" title="重置">↺</button>
             </div>
-        </div>
+		</footer>
 
-        <div class="controls-right">
-            <a href="index.html" class="btn-return" title="返回實驗室">↩</a>
-        </div>
     </div>
 
     <script>
         /**
-         * 整合版：專案C (邏輯) + 專案A (UI架構)
-         * 維持所有物理參數與邏輯不變
+         * 晟自然輔助系統 - 接觸起電 (Template Port Version)
+         * 完美複製原版邏輯，適應新版 UI 架構
          */
         const APP = {
             canvas: null,
@@ -309,7 +318,7 @@
             height: 0,
             dpr: 1,
 
-            // --- 來自專案C 的核心變數 ---
+            // --- 核心變數 (完全保留) ---
             pendulum: {
                 pivotX: 0, pivotY: 0, length: 0,
                 angle: 0, aVel: 0, aAcc: 0,
@@ -353,13 +362,13 @@
             },
 
             init: function() {
-                // 使用專案A的容器 ID
+                // DOM 綁定 (適應 Template ID)
                 this.wrapper = document.getElementById('sim-container');
                 this.canvas = document.getElementById('simCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.dpr = window.devicePixelRatio || 1;
 
-                // 綁定事件
+                // 事件綁定
                 const bind = (evts, handler) => evts.forEach(e => this.canvas.addEventListener(e, handler, {passive: false}));
                 bind(['mousedown', 'mousemove', 'mouseup', 'mouseleave'], e => this.handleMouse(e));
                 bind(['touchstart', 'touchmove', 'touchend'], e => this.handleTouch(e));
@@ -370,7 +379,6 @@
                 this.loop();
             },
 
-            // --- 修正 Resize 邏輯以適應專案A的 Flex 佈局 ---
             resize: function() {
                 const rect = this.wrapper.getBoundingClientRect();
                 this.width = rect.width;
@@ -380,12 +388,12 @@
                 this.canvas.height = this.height * this.dpr;
                 this.ctx.scale(this.dpr, this.dpr);
 
-                // 根據新版面動態計算支點 (保持與專案C相對位置一致)
-                this.pendulum.pivotX = this.width * 0.5; // 改為正中央，專案A風格
+                // 支點計算
+                this.pendulum.pivotX = this.width * 0.5;
                 this.pendulum.pivotY = -50; 
-                this.pendulum.length = this.height * 0.55;
+                this.pendulum.length = this.height * 0.55; // 保持比例
                 
-                // 物理縮放基準 (維持專案C參數 400)
+                // 物理縮放
                 let scale = Math.min(this.width, this.height) / 400;
                 this.pendulum.r = this.CONFIG.radiusBase * scale;
                 
@@ -394,11 +402,11 @@
                     W: this.CONFIG.rodW * scale 
                 };
 
-                // 更新單擺位置
+                // 更新位置
                 this.pendulum.x = this.pendulum.pivotX + this.pendulum.length * Math.sin(this.pendulum.angle);
                 this.pendulum.y = this.pendulum.pivotY + this.pendulum.length * Math.cos(this.pendulum.angle);
 
-                // 若是初次載入或重置，確保帶電棒位置正確
+                // 首次載入或重置
                 if (this.protons.length === 0) this.reset();
             },
 
@@ -409,7 +417,7 @@
                 this.state.forcedRepel = false;
                 
                 this.rod.x = this.width * 0.20; 
-                this.rod.y = this.height * 0.85; // 微調初始位置，避免被底部遮擋
+                this.rod.y = this.height * 0.85;
                 this.rod.load = 8; 
                 
                 this.pendulum.angle = 0;
@@ -452,7 +460,6 @@
                 }
             },
 
-            // --- 物理邏輯 (完全保留專案C) ---
             update: function() {
                 let pen = this.pendulum;
                 pen.x = pen.pivotX + pen.length * Math.sin(pen.angle);
@@ -531,7 +538,7 @@
                     
                     pen.angle += pen.aVel;
                     
-                    // 擺動角度限制
+                    // 角度限制
                     let margin = (this.width / 2) - pen.r - 20; 
                     let calculatedMax = Math.asin(Math.max(0, Math.min(1, margin / pen.length)));
                     if (isNaN(calculatedMax)) calculatedMax = 0.3;
@@ -802,6 +809,8 @@
 
             updateInstruction: function() {
                 const tag = document.getElementById('infoTag');
+                if (!tag) return;
+
                 const electrons = this.particles.length;
                 let msg = "";
                 let className = "instruction-tag";
@@ -905,7 +914,7 @@
 
             drawCharge: function(x, y, color, symbol) {
                 if (isNaN(x) || isNaN(y)) return; 
-                const scale = Math.min(this.width, this.height) / 400; // 統一使用 400 基準
+                const scale = Math.min(this.width, this.height) / 400; 
                 const r = this.CONFIG.particleSize * scale; 
                 
                 this.ctx.beginPath();
@@ -932,7 +941,7 @@
                 const chargeColor = this.rod.charge < 0 ? '#3498db' : '#e74c3c';
                 const symbol = this.rod.charge < 0 ? '-' : '+';
                 
-                this.ctx.fillStyle = (this.rod.charge < 0) ? '#34495e' : 'rgba(236, 240, 241, 0.95)'; // 配合 A 風格微調質感
+                this.ctx.fillStyle = (this.rod.charge < 0) ? '#34495e' : 'rgba(236, 240, 241, 0.95)';
                 this.ctx.beginPath();
                 
                 let x = -L/2, y = -W/2, width = L, height = W, radius = W/2;
@@ -979,7 +988,7 @@
 
                 this.ctx.fillStyle = '#2c3e50';
                 this.ctx.fillRect(-L/2, -W/2, 40, W); 
-                this.ctx.strokeStyle = '#555'; // 增加把手細節
+                this.ctx.strokeStyle = '#555'; 
                 this.ctx.lineWidth = 2;
                 for(let i=0; i<3; i++) {
                     this.ctx.beginPath();
@@ -991,9 +1000,8 @@
                 this.ctx.restore();
             },
 
-            // --- 輸入事件處理 (保留 C 的邏輯，使用新的 getPos) ---
+            // --- 輸入事件處理 (使用 getBoundingClientRect 修正座標) ---
             getPos: function(e) {
-                // 直接回傳相對於 Canvas 的位置 (因為現在 Canvas 是 1:1 對應螢幕像素)
                 const rect = this.canvas.getBoundingClientRect();
                 let cx, cy;
                 if (e.touches && e.touches.length > 0) {
@@ -1024,7 +1032,6 @@
             startDrag: function(e) {
                 let p = this.getPos(e);
                 let dist = Math.sqrt(Math.pow(p.x - this.rod.x, 2) + Math.pow(p.y - this.rod.y, 2));
-                // 擴大點擊判定範圍，提升手機體驗
                 if (dist < 150) {
                     this.rod.dragging = true;
                     this.drag(e);
@@ -1037,7 +1044,6 @@
 
                 let p = this.getPos(e);
                 
-                // 限制 Y 軸移動範圍 (從專案C保留的邏輯)
                 let sphereBottom = this.pendulum.y + this.pendulum.r;
                 let rodTopOffset = this.rodSize.L / 2;
                 let limitY = sphereBottom + rodTopOffset - 20; 
@@ -1048,7 +1054,6 @@
                 let newY = Math.max(minY, Math.min(maxY, p.y));
                 this.rod.y = newY;
                 
-                // X 軸跟隨滑鼠，但限制不出界
                 this.rod.x = Math.max(0, Math.min(this.width, p.x));
             },
 
@@ -1070,9 +1075,9 @@
             }
         };
 
-        window.onload = function() {
+        window.addEventListener('load', function() {
             APP.init();
-        };
+        });
 
     </script>
 </body>
