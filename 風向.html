@@ -1,0 +1,769 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <title>晟自然輔助系統　風向與風力</title>
+    
+    <style>
+        /* =========================================
+           1. 核心架構：App Shell (完全保留 V4)
+           ========================================= */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100dvh;
+            overflow: hidden;
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            color: #333;
+        }
+
+        .app-layout-wrapper {
+            width: 100%;
+            max-width: 600px; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: transparent;
+        }
+
+        /* 標題列 */
+        .main-header {
+            flex: 0 0 60px;
+            width: 100%;
+            background: linear-gradient(90deg, #1a2a6c, #b21f1f, #fdbb2d);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
+            color: white;
+        }
+
+        .logo-area {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-image: url('logo.jpg');
+            background-size: cover;
+            border: 2px solid #00d2ff;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 1.0rem;
+            font-weight: bold;
+            color: white;
+            flex: 1;                   
+        }
+
+        .line-btn {
+            margin-left: auto;
+            background-color: #00B900;
+            color: white;
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            border: 1px solid rgba(255,255,255,0.5);
+            display: flex;
+            align-items: center;
+        }
+
+        /* =========================================
+           2. 中間內容區 (完全保留 V4)
+           ========================================= */
+        .content-scroll-area {
+            flex: 1 1 auto;
+            overflow-y: hidden; /* 鎖定滾動，讓 Canvas 滿版 */
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        /* 畫布容器 */
+        .simulation-container {
+            width: 100%;
+            height: 100%; /* 佔滿剩餘空間 */
+            position: relative;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* =========================================
+           3. 底部控制區：小學生遊戲手把風格 (完全保留 V4)
+           ========================================= */
+        .controls-dock {
+            flex: 0 0 auto;
+            width: 100%;
+            background: #f0f3f5;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            padding: 15px 15px;
+            box-sizing: border-box;
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
+            
+            display: block;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* 左側：十字方向鍵 (D-Pad) */
+        .d-pad-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 70px);
+            gap: 10px;
+			width: 100%;
+			background: transparent;			
+			padding: 0;
+			margin: 0 auto;
+        }
+
+        .d-btn {
+			width: 100%;
+			height: 100%; 
+			border-radius: 12px; 
+			background: #fff;
+			border: 1px solid #ccc; 
+			box-shadow: 0 4px 0 #bbb;
+			cursor: pointer;
+			font-weight: bold; 
+			color: #555; 
+			font-size: 1.1rem;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: all 0.1s;
+		}
+		
+		.d-btn:active { transform: translateY(2px); box-shadow: none; }
+		
+		/* 確保 active 狀態下，背景變藍、文字變白 */
+        .d-btn.active { 
+            background: #3498db; 
+            color: white;         /* 加上這行，確保字體反白明顯 */
+            border-color: #2980b9; 
+            box-shadow: 0 2px 0 #1f6391; 
+            transform: translateY(1px); /* 微幅下壓感 */
+        }
+
+		.center-btn {
+			width: 100%; height: 100%;
+			border-radius: 12px;
+			border: 2px solid #fff;
+			cursor: pointer;
+			font-weight: 900;
+			font-size: 1.1rem;
+			color: white;
+			box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+			display: flex; align-items: center; justify-content: center;
+			transition: all 0.2s;    
+			/* 預設顏色 (無風-灰) */
+			background: #95a5a6; 
+		}
+		
+		.center-btn:active { transform: scale(0.95); }
+
+        .d-btn.active:active {
+            transform: translateY(3px);
+            box-shadow: none;
+        }
+        .d-btn.dummy {
+            background: transparent;
+            box-shadow: none;
+            pointer-events: none;
+        }
+
+        /* 右側：風力檔位 (直排或橫排大按鈕) */
+        .force-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .force-label {
+            text-align: center;
+            font-weight: bold;
+            color: #555;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+        
+        .force-btn-row {
+            display: flex;
+            justify-content: space-around;
+            width: 100%;
+            background: #fff;
+            padding: 8px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+        }
+
+        .f-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            border: 2px solid #eee;
+            background: #fff;
+            color: #555;
+            font-weight: bold;
+            font-size: 1.1rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        /* 風力分級顏色 */
+        .f-btn[data-val="0"].active { background: #95a5a6; color: white; border-color: #7f8c8d; transform: scale(1.1); }
+        .f-btn[data-val="1"].active { background: #2ecc71; color: white; border-color: #27ae60; transform: scale(1.1); }
+        .f-btn[data-val="2"].active { background: #e74c3c; color: white; border-color: #e67e22; transform: scale(1.1); }
+		
+		/* =========================================
+		懸浮狀態顯示 (HUD 風格) - 寬版固定式
+		========================================= */
+		.status-float {
+			position: absolute;
+			top: 15px; /* 稍微往上提，留空間給畫面 */
+			left: 50%;
+			transform: translateX(-50%);
+    
+			/* 關鍵修改：鎖定寬度 */
+			width: 90%;
+			max-width: 460px; /* 電腦版不要太寬 */
+    
+			background: rgba(255, 255, 255, 0.95);
+			/* 上下留白，左右不用 */
+			padding: 10px 0; 
+    
+			border-radius: 16px; /* 圓角稍微小一點，像卡片 */
+			box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+			border: 2px solid #3498db;
+    
+			/* 彈性佈局：垂直排列 */
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			gap: 4px; /* 兩行文字的間距 */
+    
+			z-index: 10;
+			pointer-events: none; 
+		}
+
+		/* 第一行：重點結論 */
+		.status-main { 
+			font-size: 1.3rem; 
+			font-weight: 900; 
+			color: #2c3e50; 
+			margin: 0;
+			line-height: 1.2;
+		}
+
+		/* 第二行：觀念解釋 */
+		.status-sub { 
+			font-size: 0.95rem; 
+			color: #555; 
+			font-weight: bold; 
+			margin: 0;
+			line-height: 1.2;
+			/* 確保這行一定會顯示 */
+			display: block; 
+		}
+		
+    </style>
+</head>
+<body>
+
+    <div class="app-layout-wrapper">
+        
+        <header class="main-header">
+            <a href="index.html" class="logo-area" title="返回大廳"></a>
+            <div class="header-title">晟自然輔助系統<br>風向與風力</div>
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="line-btn">
+                加 LINE 討論
+            </a>
+        </header>
+
+        <main class="content-scroll-area">
+            
+            <div class="status-float">
+                <div class="status-main" id="text-main">北風 0級</div>
+                <div class="status-sub" id="text-sub">無風</div>
+            </div>
+            <div class="simulation-container" id="sim-container">
+                <canvas id="mainCanvas"></canvas>
+            </div>
+
+        </main>
+
+        <footer class="controls-dock">            
+            <div class="d-pad-container">
+        <button class="d-btn" data-dir="NW">西北</button>
+        <button class="d-btn" data-dir="N">北</button>
+        <button class="d-btn" data-dir="NE">東北</button>
+        
+        <button class="d-btn" data-dir="W">西</button>
+        <button id="force-toggle-btn" class="center-btn">無風</button>
+        <button class="d-btn" data-dir="E">東</button>
+        
+        <button class="d-btn" data-dir="SW">西南</button>
+        <button class="d-btn" data-dir="S">南</button>
+        <button class="d-btn" data-dir="SE">東南</button>
+    </div>
+
+        </footer>
+
+    </div>
+
+    <script>
+        // ============================================
+        // 核心邏輯：基於 V4 進行畫布內容微調
+        // ============================================
+
+        const DIRS = {
+			'N':  { name: '北', to: '南', angle: 270 },
+			'NE': { name: '東北', to: '西南', angle: 315 },
+			'E':  { name: '東', to: '西', angle: 0 },
+			'SE': { name: '東南', to: '西北', angle: 45 },
+			'S':  { name: '南', to: '北', angle: 90 },
+			'SW': { name: '西南', to: '東北', angle: 135 },
+			'W':  { name: '西', to: '東', angle: 180 },
+			'NW': { name: '西北', to: '東南', angle: 225 }
+		};
+
+        const FORCES = [
+            { name: "無風", speed: 0, lift: 0 },
+            { name: "微風", speed: 3, lift: 0.4 },
+            { name: "強風", speed: 12, lift: 0.95 },
+        ];
+
+        let state = {
+            dir: 'N',       
+            force: 0,       
+            time: 0,
+            smoke: [],      // 新增：煙霧粒子池
+            lines: []       // 新增：風線粒子池
+        };
+
+        let canvas, ctx, w, h;
+        
+        function init() {
+            // UI 綁定 (保留 V4 邏輯)
+            const forceBtn = document.getElementById('force-toggle-btn');
+				forceBtn.addEventListener('click', () => {
+				// 邏輯：0 -> 1 -> 2 -> 0 (循環)
+				state.force = (state.force + 1) % 3; 
+    
+				updateInfo(); // 更新畫面文字
+				updateCenterBtn(); // 更新按鈕自己的顏色和文字
+			});
+
+		// ▼▼▼ 新增：方向鍵 (D-Pad) 監聽邏輯 ▼▼▼
+            const dirBtns = document.querySelectorAll('.d-btn');
+            dirBtns.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const dir = btn.dataset.dir; // 取得 HTML 裡的 data-dir="NW" 等數值
+                    if (!dir) return; // 忽略沒有定義方向的空按鈕
+
+                    state.dir = dir;      // 1. 更新內部狀態
+                    updateDirectionUI();  // 2. 更新按鈕亮燈狀態
+                    updateInfo();         // 3. 更新上方文字
+                });
+            });
+		
+		function updateCenterBtn() {
+			const btn = document.getElementById('force-toggle-btn');
+    
+			// 定義三種狀態的顏色與文字
+			const configs = [
+				{ text: "無風", color: "#95a5a6" }, // 0級：灰
+				{ text: "微風", color: "#2ecc71" }, // 1級：綠
+				{ text: "強風", color: "#e74c3c" }  // 2級：紅
+			];
+    
+			const cfg = configs[state.force];    
+				btn.innerText = cfg.text;
+				btn.style.backgroundColor = cfg.color;
+		
+				// 加一點簡單的按鈕動畫回饋
+				btn.animate([
+					{ transform: 'scale(0.9)' },
+					{ transform: 'scale(1)' }
+				], { duration: 100 });
+		}
+		
+		// 專門用來切換方向鍵的「亮燈」狀態
+        function updateDirectionUI() {
+            // 1. 先把所有方向鍵的亮燈關掉
+            document.querySelectorAll('.d-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // 2. 找到目前方向 (state.dir) 對應的按鈕，把它點亮
+            const targetBtn = document.querySelector(`.d-btn[data-dir="${state.dir}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+        }
+            
+
+            // Canvas 初始化
+            canvas = document.getElementById('mainCanvas');
+            ctx = canvas.getContext('2d');
+            resize();
+            window.addEventListener('resize', resize);
+
+            // 預先產生風線
+            for(let i=0; i<30; i++) state.lines.push(createLine());
+
+            requestAnimationFrame(loop);
+        }
+
+        function updateInfo() {
+			const dData = DIRS[state.dir];
+			const fData = FORCES[state.force];
+    
+			const mainText = document.getElementById('text-main');
+			const subText = document.getElementById('text-sub');
+
+			// 確保第二行是顯示的 (以防之前隱藏過)
+			subText.style.display = 'block';
+
+			// 第一行：簡潔的結論
+			// 例如：北風・強風
+			mainText.innerText = `${dData.name}風－${fData.name}`;
+
+			// 第二行：詳細的解釋
+			if (state.force === 0) {
+				// 無風特殊處理
+				subText.innerText = "空氣沒有流動";
+				subText.style.color = "#95a5a6"; // 灰色字體表示靜止
+			} else {
+				// 有風：解釋流向
+				// 例如：(從北方吹向南方)
+				subText.innerText = `(從${dData.name}方吹向${dData.to}方)`;
+				subText.style.color = "#d35400"; // 橘紅色字體強調動態
+			}
+		}
+
+        function resize() {
+            const container = document.getElementById('sim-container');
+            w = container.clientWidth;
+            h = container.clientHeight;
+            const dpr = window.devicePixelRatio || 1;
+            canvas.width = w * dpr;
+            canvas.height = h * dpr;
+            ctx.scale(dpr, dpr);
+            canvas.style.width = w + 'px';
+            canvas.style.height = h + 'px';
+        }
+
+        function createLine() {
+            return {
+                x: Math.random()*800-400, y: Math.random()*800-400,
+                life: Math.random()*100, speedVar: 0.8+Math.random()*0.4
+            };
+        }
+
+        function createSmoke() {
+            return {
+                x: 0, y: 0, // 相對於柱頂
+                vx: (Math.random()-0.5)*1.5,
+                vy: -1.5 - Math.random(), // 向上
+                size: 5 + Math.random()*5,
+                alpha: 0.6,
+                life: 80
+            };
+        }
+
+        // ===================================
+        // 繪圖迴圈 (僅在此處進行優化)
+        // ===================================
+        function loop() {
+            ctx.clearRect(0, 0, w, h);
+            state.time += 0.05;
+
+            const cx = w / 2;
+            const cy = h / 2 + 50; 
+            const poleH = 150;
+            const topY = cy - poleH;
+			const viewOffset = 15 * Math.PI / 180;
+
+            // 角度計算
+            const srcAngle = getVisualAngle(DIRS[state.dir].angle);
+            const flowAngle = srcAngle + Math.PI;
+
+			// ▼▼▼ 3. 替換整段「畫地板」的程式碼 ▼▼▼
+    
+			// --- 繪圖層 1: 暗色舞台 (修正版) ---
+			ctx.save();
+			ctx.translate(cx, cy);
+    
+			// A. 畫半透明底座 (保持水平，只壓扁不旋轉)
+			//ctx.save();
+			//ctx.scale(1, 0.6); 
+			//ctx.beginPath();
+			//ctx.arc(0, 0, 160, 0, Math.PI*2);
+			//ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+			//ctx.fill();
+			//ctx.restore(); // 結束壓扁，回到正常座標系
+
+// --- B. 畫羅盤刻度與文字 (套用斜切) ---
+    ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+    ctx.lineWidth = 2;
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 24px Arial';
+    ctx.textAlign = 'center'; 
+    ctx.textBaseline = 'middle';
+
+    const compass = [
+        { txt: 'E', ang: 0 },
+        { txt: 'S', ang: 90 },
+        { txt: 'W', ang: 180 },
+        { txt: 'N', ang: 270 }
+    ];
+
+    compass.forEach(item => {
+        // 關鍵：呼叫同一個函式來取得變形後的角度
+        const finalRad = getVisualAngle(item.ang);
+        
+        const rLine = 140; // 線長
+        const rText = 155; // 字距
+        
+        const cos = Math.cos(finalRad);
+        const sin = Math.sin(finalRad);
+
+        // 畫線
+        ctx.beginPath();
+        ctx.moveTo(cos * 100, sin * 100 * 0.6); // 從稍遠處開始畫(不穿過柱子)
+        ctx.lineTo(cos * rLine, sin * rLine * 0.6); // 記得 Y 軸要乘 0.6 透視
+        ctx.stroke();
+
+        // 畫字
+        ctx.fillText(item.txt, cos * rText, sin * rText * 0.6);
+    });
+
+		ctx.restore();
+
+            // 2. [新增] 煙霧系統 (在風線之前畫)
+            updateAndDrawSmoke(cx, topY, flowAngle);
+
+            // 3. 畫風線 (背景層)
+            if(state.force > 0) drawLines(cx, cy, flowAngle, false);
+
+            // 4. 畫柱子
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(cx, topY);
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 8; ctx.lineCap = 'round'; ctx.stroke(); // 改淺色柱子對比深底
+
+            // 5. 畫箭頭 (指向來源)
+            drawArrow(cx, topY, srcAngle);
+
+            // 6. [優化] 畫風力袋/旗子 (指向去處，動態更明確)
+            drawWindsock(cx, topY + 30, flowAngle);
+
+            // 7. 畫風線 (前景層)
+            if(state.force > 0) drawLines(cx, cy, flowAngle, true);
+
+            requestAnimationFrame(loop);
+        }
+
+        // [新增] 煙霧繪製邏輯
+        function updateAndDrawSmoke(cx, topY, angle) {
+            // 產生煙霧
+            if(state.force <= 2 && Math.random() < 0.3) { // 強風時少煙，以免太亂
+                state.smoke.push(createSmoke());
+            }
+
+            const windSpeed = FORCES[state.force].speed;
+
+            ctx.save();
+            ctx.translate(cx, topY);
+
+            for(let i=state.smoke.length-1; i>=0; i--) {
+                let p = state.smoke[i];
+                p.life--;
+                
+                // 物理：向上飄 + 被風吹
+                p.y += p.vy; // 上升
+                p.x += p.vx; // 擴散
+                
+                if(state.force > 0) {
+                    // 風吹偏移 (透視)
+                    p.x += Math.cos(angle) * windSpeed * 0.2;
+                    p.y += Math.sin(angle) * windSpeed * 0.2 * 0.6;
+                    p.alpha -= 0.01; // 有風時散得快
+                } else {
+                    p.alpha -= 0.005; // 無風時散得慢
+                }
+
+                if(p.life <= 0 || p.alpha <= 0) {
+                    state.smoke.splice(i, 1);
+                    continue;
+                }
+
+                // 畫白煙
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size, 0, Math.PI*2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+                ctx.fill();
+            }
+            ctx.restore();
+        }
+
+        // [優化版] 風向標：標準箭頭造型
+        function drawArrow(x, y, angle) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle); // 讓整支箭頭跟著風向轉
+
+            const color = '#ff4757'; // 鮮豔的紅色
+            
+            // 1. 畫箭頭 (Head) - 指向風的來源
+            ctx.beginPath();
+            ctx.moveTo(35, 0);        // 頂點
+            ctx.lineTo(15, -12);      // 上角
+            ctx.lineTo(15, 12);       // 下角
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // 2. 畫箭身 (Body)
+            ctx.beginPath();
+            ctx.rect(-25, -4, 40, 8); // (x, y, w, h) 長方形桿子
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // 3. 畫箭尾 (Tail) - 被風吹的尾翼
+            ctx.beginPath();
+            ctx.moveTo(-25, -4);
+            ctx.lineTo(-45, -15);     // 尾翼上端
+            ctx.lineTo(-45, 15);      // 尾翼下端
+            ctx.lineTo(-25, 4);
+            ctx.closePath();
+            ctx.fillStyle = color;
+            ctx.fill();
+
+            // 4. 畫中心鉚釘 (Center)
+            ctx.beginPath();
+            ctx.arc(0, 0, 5, 0, Math.PI*2);
+            ctx.fillStyle = '#fff';   // 白點
+            ctx.fill();
+            ctx.strokeStyle = '#c0392b'; // 深紅邊框
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            ctx.restore();
+        }
+
+        // [優化] 畫風力袋 (取代 V4 簡單三角形，呈現垂下/水平)
+        function drawWindsock(x, y, angle) {
+            const lift = FORCES[state.force].lift;
+            const len = 100;
+            
+            // 計算尾端位置
+            // lift=0 -> 垂直向下 (drop max)
+            // lift=1 -> 水平 (drop 0)
+            const drop = (1-lift) * 100;
+            const extend = lift * len;
+            
+            // 水平延伸量 (受風向控制)
+            const dx = Math.cos(angle) * extend;
+            const dy = Math.sin(angle) * extend * 0.6;
+            
+            // 波動
+            const wave = (state.force > 0) ? Math.sin(state.time * 5) * 3 * state.force : 0;
+
+            const tx = x + dx;
+            const ty = y + drop + dy + wave;
+
+            ctx.save();
+            ctx.strokeStyle = (state.force === 0) ? '#bdc3c7' : '#f1c40f'; // 無風灰，有風黃
+            ctx.lineWidth = 12;
+            ctx.lineCap = 'round';
+            
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            // 貝茲曲線模擬垂墜
+            ctx.quadraticCurveTo(x + dx*0.3, y + drop*0.6 + dy*0.3, tx, ty);
+            ctx.stroke();
+            
+            // 畫紅白條紋細節 (僅在有風時)
+            if(state.force > 0) {
+                ctx.strokeStyle = '#e67e22';
+                ctx.setLineDash([10, 10]);
+                ctx.stroke();
+            }
+            ctx.restore();
+        }
+
+        // 畫風線
+        function drawLines(cx, cy, angle, isFront) {
+            const speed = FORCES[state.force].speed;
+            ctx.save(); ctx.translate(cx, cy);
+            const vx = Math.cos(angle)*speed; const vy = Math.sin(angle)*speed*0.6;
+            ctx.strokeStyle = isFront ? 'rgba(255,255,255,0.8)' : 'rgba(255,255,255,0.2)';
+            ctx.lineWidth = isFront ? 3 : 1;
+
+            state.lines.forEach((p, idx) => {
+                if((idx%2===0) !== isFront) return;
+                p.x += vx * p.speedVar; p.y += vy * p.speedVar;
+                
+                if(Math.abs(p.x) > 400 || Math.abs(p.y) > 300) {
+                    p.x = -vx*40 + (Math.random()*200-100);
+                    p.y = -vy*40 + (Math.random()*200-100);
+                }
+                
+                ctx.beginPath(); ctx.moveTo(p.x, p.y);
+                ctx.lineTo(p.x-vx*4, p.y-vy*4); ctx.stroke();
+            });
+            ctx.restore();
+        }
+		
+		// === 新增這個小工具函式 ===
+		function getVisualAngle(deg) {
+			const rad = deg * Math.PI / 180;
+			const skew = Math.tan(15 * Math.PI / 180); // 設定傾斜 15 度
+    
+		// 原始向量
+			const x = Math.cos(rad);
+			const y = Math.sin(rad);
+    
+		// 進行「斜切變形」：X 軸不動，Y 軸產生偏移
+		// 當 y 是負的 (北方) 時，x 加上偏移量使其向右倒
+			const shearX = x - y * skew; 
+			const shearY = y;
+    
+			return Math.atan2(shearY, shearX);
+		}
+
+        window.addEventListener('load', init);
+
+    </script>
+</body>
+</html>
