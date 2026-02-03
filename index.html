@@ -14,6 +14,10 @@
             --bg-main: #1a1a2e;
             --primary-neon: #00d2ff;
             --accent-neon: #f093fb;
+			--gre-neon: #2ecc71;
+			--ora-neon: #ff9f43;
+			--yel-neon: #f9ca24;
+			--red-neon: #eb4d4b;
             --text-main: #ffffff;
             --text-muted: #a0a0b0;
             --bg-overlay: rgba(26, 26, 46, 0.85);
@@ -33,7 +37,7 @@
            ========================================= */
         * { 
             box-sizing: border-box; 
-            -webkit-tap-highlight-color: transparent; 
+            -webkit-tap-pur-color: transparent; 
             /* 隱藏預設捲動軸，視覺更潔淨 */
             scrollbar-width: none; 
             -ms-overflow-style: none;
@@ -185,8 +189,20 @@
             font-size: 2.5rem; margin-bottom: 15px; text-shadow: 0 0 15px rgba(255,255,255,0.3); 
         }
 
-        .card-title { font-size: 1.3rem; font-weight: 700; margin: 0 0 10px 0; color: var(--primary-neon); }
-        .card-desc { font-size: 0.9rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 20px; flex-grow: 1; }
+        .card-title { 
+		font-size: 1.3rem; 
+		font-weight: 700; 
+		margin: 0 0 10px 0; 
+		color: var(--primary-neon); }
+        
+		.card-desc { 
+		font-size: 0.9rem;
+		color: var(--text-muted);
+		margin-bottom: 20px;
+		flex-grow: 1;
+		line-height: 1.5;
+		height: 3em;
+		}
         
         /* 按鈕樣式 */
         .card-btn {
@@ -211,17 +227,160 @@
         }
 
         /* 特殊卡片 Highlight */
-        .lab-card.highlight { border-color: var(--accent-neon); }
-        .lab-card.highlight::before { background: var(--accent-neon); }
-        .lab-card.highlight .card-title { color: var(--accent-neon); }
-        .lab-card.highlight .card-btn { border-color: var(--accent-neon); color: var(--accent-neon); background: linear-gradient(90deg, transparent 0%, rgba(240, 147, 251, 0.1) 100%); }
+        .lab-card.pur::before { background: var(--accent-neon); }
+        .lab-card.pur .card-title { color: var(--accent-neon); }
+        .lab-card.pur .card-btn { 
+		border-color: var(--accent-neon); 
+		color: var(--accent-neon); 
+		background: linear-gradient(90deg, transparent 0%, rgba(240, 147, 251, 0.1) 100%); }
+		.lab-card.gre::before { background: var(--gre-neon); }
+		.lab-card.gre .card-title { color: var(--gre-neon); }
+		.lab-card.gre .card-btn { 
+			border-color: var(--gre-neon); 
+			color: var(--gre-neon);
+			background: linear-gradient(90deg, transparent 0%, rgba(46, 204, 113, 0.1) 100%); 
+		}
+		.lab-card.ora::before { background: var(--ora-neon); }
+		.lab-card.ora .card-title { color: var(--ora-neon); }
+		.lab-card.ora .card-btn { 
+			border-color: var(--ora-neon); 
+			color: var(--ora-neon);
+			background: linear-gradient(90deg, transparent 0%, rgba(46, 204, 113, 0.1) 100%);
+		}
+		/* =========================================
+		[擴充] 新增模組：化學 (Chem) & 備用 (Red)
+		========================================= */
+
+		/* --- 1. (黃色) --- */
+		.lab-card.yel::before { background: var(--yel-neon); }
+		.lab-card.yel .card-title { color: var(--yel-neon); }
+		.lab-card.yel .card-btn { 
+			border-color: var(--yel-neon); 
+			color: var(--yel-neon);
+		/* 黃色微光漸層 */
+		background: linear-gradient(90deg, transparent 0%, rgba(249, 202, 36, 0.1) 100%);
+		}
+		.lab-card.yel .card-btn:active {
+			background: var(--yel-neon);
+			color: #000;
+		}
+
+		/* --- 2. (紅色) --- */
+		.lab-card.red::before { background: var(--red-neon); }
+		.lab-card.red .card-title { color: var(--red-neon); }
+		.lab-card.red .card-btn { 
+			border-color: var(--red-neon); 
+			color: var(--red-neon);
+		/* 紅色微光漸層 */
+		background: linear-gradient(90deg, transparent 0%, rgba(235, 77, 75, 0.1) 100%);
+		}
+		.lab-card.red .card-btn:active {
+			background: var(--red-neon);
+			color: #000;
+		}
+		
         
+        /* --- 修正後的 Hover 特效區 (請完整覆蓋原本的區塊) --- */
         @media (hover: hover) {
-            .lab-card.highlight:hover .card-btn,
-            .lab-card.highlight .card-btn:hover { background: var(--accent-neon); color: #000; box-shadow: 0 0 15px var(--accent-neon); }
+            
+            /* ============================
+               1. 設定「卡片邊框」變色邏輯
+               ============================ */
+            
+            /* 預設藍色 (不用動，繼承上方設定) */
+            
+            /* 紫色卡片：滑鼠移上去變紫框 */
+            .lab-card.pur:hover {
+                border-color: var(--accent-neon);
+            }
+
+            /* 綠色卡片：滑鼠移上去變綠框 */
+            .lab-card.gre:hover {
+                border-color: var(--gre-neon);
+            }
+
+            /* 橘色卡片：滑鼠移上去變橘框 */
+            .lab-card.ora:hover {
+                border-color: var(--ora-neon);
+            }
+			
+			/* 黃色卡片懸停變色 */
+			.lab-card.yel:hover {
+				border-color: var(--yel-neon);
+			}
+
+			/* 紅色卡片懸停變色 */
+			.lab-card.red:hover {
+				border-color: var(--red-neon);
+			}
+
+
+            /* ============================
+               2. 設定「按鈕」變色互動邏輯
+               ============================ */
+
+            /* 紫色按鈕互動 */
+            .lab-card.pur:hover .card-btn,
+            .lab-card.pur .card-btn:hover { 
+                background: var(--accent-neon); 
+                color: #000; 
+                box-shadow: 0 0 15px var(--accent-neon);
+                border-color: var(--accent-neon);
+            }
+
+            /* 綠色按鈕互動 */
+            .lab-card.gre:hover .card-btn,
+            .lab-card.gre .card-btn:hover { 
+                background: var(--gre-neon); 
+                color: #000; 
+                box-shadow: 0 0 15px var(--gre-neon);
+                border-color: var(--gre-neon);
+            } 
+
+            /* 橘色按鈕互動 */
+            .lab-card.ora:hover .card-btn,
+            .lab-card.ora .card-btn:hover { 
+                background: var(--ora-neon); 
+                color: #000; 
+                box-shadow: 0 0 15px var(--ora-neon);
+                border-color: var(--ora-neon);
+            }
+			
+			/* 化學按鈕互動 */
+			.lab-card.yel:hover .card-btn,
+			.lab-card.yel .card-btn:hover { 
+				background: var(--yel-neon); 
+				color: #000; 
+				box-shadow: 0 0 15px var(--yel-neon);
+				border-color: var(--yel-neon);
+			}
+
+			/* 紅色按鈕互動 */
+			.lab-card.red:hover .card-btn,
+			.lab-card.red .card-btn:hover { 
+				background: var(--red-neon); 
+				color: #000; 
+				box-shadow: 0 0 15px var(--red-neon);
+				border-color: var(--red-neon);
+			}
         }
         
-        .lab-card.highlight .card-btn:active { background: var(--accent-neon); color: #000; transform: scale(0.95); }
+        /* --- 修正後的 Active (點擊) 特效區 --- */
+        .lab-card.pur .card-btn:active { 
+            background: var(--accent-neon); 
+            color: #000; 
+            transform: scale(0.95); 
+        }
+
+        .lab-card.gre .card-btn:active { 
+            background: var(--gre-neon); 
+            color: #000; 
+        } /* 補上這個括號 */
+
+        .lab-card.ora .card-btn:active { 
+            background: var(--ora-neon); 
+            color: #000;
+        }
 
 
         /* 手機版適配 */
@@ -270,10 +429,7 @@
     </header>
 
     <main>
-        <div class="intro-text">
-            請選擇下列模組　啟動實驗模擬<br>
-        </div>
-
+        
         <div class="filter-container">
             <button class="filter-btn active" onclick="filterLabs('all')">all</button>
             <button class="filter-btn" onclick="filterLabs('game')">遊戲</button>
@@ -285,7 +441,7 @@
 
         <div class="lab-grid">
             
-            <div class="lab-card highlight" data-category="game">
+            <div class="lab-card pur" data-category="game">
                 <div class="card-icon">🎮</div>
                 <div class="card-content">
                     <h3 class="card-title">抽籤小幫手</h3>
@@ -294,7 +450,7 @@
                 <a href="抽籤.html" class="card-btn" target="_blank">啟動系統</a>
             </div>
 			
-			<div class="lab-card highlight" data-category="game">
+			<div class="lab-card pur" data-category="game">
                 <div class="card-icon">🎮</div>
                 <div class="card-content">
                     <h3 class="card-title">手速競技場－通識</h3>
@@ -303,7 +459,7 @@
                 <a href="game/index.html" class="card-btn" target="_blank">啟動系統</a>
             </div>
 			
-			<div class="lab-card highlight" data-category="game">
+			<div class="lab-card pur" data-category="game">
                 <div class="card-icon">🎮</div>
                 <div class="card-content">
                     <h3 class="card-title">手速競技場－複選地獄</h3>
@@ -312,7 +468,16 @@
                 <a href="mul/index.html" class="card-btn" target="_blank">啟動系統</a>
             </div>
 
-            <div class="lab-card" data-category="es">
+            <div class="lab-card yel" data-category="es">
+                <div class="card-icon">💨</div> 
+                <div class="card-content">
+                    <h3 class="card-title">風向與風力</h3> 
+                    <p class="card-desc">模擬風向與風力，動態呈現空氣的流向。</p> 
+                </div>
+                <a href="風向.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+			
+			<div class="lab-card yel" data-category="es">
                 <div class="card-icon">💧</div> 
                 <div class="card-content">
                     <h3 class="card-title">水的移動：虹吸現象</h3> 
@@ -321,24 +486,6 @@
                 <a href="虹吸.html" class="card-btn" target="_blank">進入實驗</a>
             </div>
 			
-			<div class="lab-card" data-category="earth">
-                <div class="card-icon">🌔</div> 
-                <div class="card-content">
-                    <h3 class="card-title">天　體：月相盈虧</h3> 
-                    <p class="card-desc">模擬月球公轉與光照關係，動態呈現朔望月週期變化。</p> 
-                </div>
-                <a href="月相.html" class="card-btn" target="_blank">進入實驗</a>
-            </div>
-
-            <div class="lab-card" data-category="earth">
-                <div class="card-icon">🌍</div>
-                <div class="card-content">
-                    <h3 class="card-title">天　體：太陽與四季</h3>
-                    <p class="card-desc">分析太陽直射角度、晝夜長短與季節變化的幾何關係。</p>
-                </div>
-                <a href="四季.html" class="card-btn" target="_blank">進入實驗</a>
-            </div>
-
             <div class="lab-card" data-category="phy">
                 <div class="card-icon">⚡</div>
                 <div class="card-content">
@@ -391,6 +538,24 @@
                     <p class="card-desc">模擬冷熱水混合過程，計算熱量轉移與最終平衡溫度。</p>
                 </div>
                 <a href="熱平衡.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+			
+			<div class="lab-card ora" data-category="earth">
+                <div class="card-icon">🌔</div> 
+                <div class="card-content">
+                    <h3 class="card-title">天　體：月相盈虧</h3> 
+                    <p class="card-desc">模擬月球公轉與光照關係，動態呈現朔望月週期變化。</p> 
+                </div>
+                <a href="月相.html" class="card-btn" target="_blank">進入實驗</a>
+            </div>
+
+            <div class="lab-card ora" data-category="earth">
+                <div class="card-icon">🌍</div>
+                <div class="card-content">
+                    <h3 class="card-title">天　體：太陽與四季</h3>
+                    <p class="card-desc">分析太陽直射角度、晝夜長短與季節變化的幾何關係。</p>
+                </div>
+                <a href="四季.html" class="card-btn" target="_blank">進入實驗</a>
             </div>
 
         </div>
