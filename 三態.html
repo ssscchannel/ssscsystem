@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    
+    <title>晟自然輔助系統　物質三態模擬</title>
+    
+    <style>
+        /* =========================================
+           1. 核心架構：App Shell (保留原樣)
+           ========================================= */
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100dvh; 
+            overflow: hidden;
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            
+            background-image: url('page.jpg'); 
+            background-size: cover;
+            background-position: center;
+            font-family: 'Microsoft JhengHei', 'Segoe UI', sans-serif;
+            color: #333;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .app-layout-wrapper {
+            width: 100%;
+            max-width: 600px; 
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            background: transparent;
+        }
+
+        .app-layout-wrapper::before {
+            content: "";
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(5px);
+            z-index: -1;
+        }
+
+        /* =========================================
+           2. 頂部：標題列
+           ========================================= */
+        .main-header {
+            flex: 0 0 60px;
+            width: 100%;
+            background: linear-gradient(90deg, #1a2a6c, #b21f1f, #fdbb2d);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            padding: 0 15px;
+            box-sizing: border-box;
+            color: white;
+        }
+
+        .logo-area {
+            width: 40px;
+            height: 40px;
+            background-color: white;
+            border-radius: 50%;
+            margin-right: 15px;
+            background-image: url('logo.jpg');
+            background-size: cover;
+            border: 2px solid #00d2ff;
+            flex-shrink: 0;
+        }
+
+        .header-title {
+            font-size: 1.0rem;
+            font-weight: bold;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+            color: white;
+            white-space: normal;
+            line-height: 1.2;          
+            max-height: 2.4em;         
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            flex: 1;                   
+            padding-right: 10px;       
+        }
+
+        .line-btn {
+            margin-left: auto;
+            background-color: #00B900;
+            color: white;
+            text-decoration: none;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            border: 1px solid rgba(255,255,255,0.5);
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            white-space: nowrap;
+        }
+        
+        .line-btn:active {
+            transform: scale(0.95);
+            background-color: #009900;
+        }
+
+        /* =========================================
+           3. 中間：內容區
+           ========================================= */
+        .content-scroll-area {
+            flex: 1 1 auto;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            width: 100%;
+            padding: 0;
+            padding-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ui-card {
+            width: 96% !important;
+            max-width: 96% !important;
+            box-sizing: border-box;
+            margin-left: auto;
+            margin-right: auto;
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+            padding: 12px;
+        }
+
+        .topic-description {
+            text-align: center;
+            color: #444;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        /* =========================================
+           4. 模擬器特定樣式
+           ========================================= */
+        .simulation-container {
+            width: 96%;
+            aspect-ratio: 1 / 1;
+            background: #f0f4f8;
+            border-radius: 12px;
+            position: relative;
+            overflow: hidden;
+            touch-action: none;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            margin-top: 10px;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .thermometer-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 1px solid #ccc;
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            z-index: 5;
+        }
+
+        /* =========================================
+           5. 底部控制塢
+           ========================================= */
+        .controls-dock {
+            flex: 0 0 auto;
+            width: 100%;
+            background: rgba(255, 255, 255, 0.98);
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            z-index: 100;
+            padding: 15px;
+            box-sizing: border-box;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .state-btn-group {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            justify-content: space-between;
+        }
+
+        .state-btn {
+            flex: 1;
+            padding: 10px 0;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: default;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: center;
+            gap: 6px;
+            background: #f5f5f5;
+            color: #666;
+            border: 2px solid transparent;
+        }
+        
+        .state-btn span { font-size: 1.2rem; }
+
+        .state-btn.active { transform: translateY(-2px); box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+        .state-btn[data-state="solid"].active { background: #e3f2fd; color: #1565c0; border-color: #1565c0; }
+        .state-btn[data-state="liquid"].active { background: #e0f7fa; color: #006064; border-color: #006064; }
+        .state-btn[data-state="gas"].active { background: #fff3e0; color: #e65100; border-color: #e65100; }
+
+        .lever-wrapper {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: linear-gradient(90deg, #3498db 0%, #ffffff 50%, #e74c3c 100%);
+            padding: 10px 15px;
+            border-radius: 30px;
+            border: 1px solid #ddd;
+            position: relative;
+            box-sizing: border-box;
+        }
+        
+        .lever-label { 
+            font-size: 1.2rem; 
+            font-weight: bold;
+            color: #fff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+            width: 24px;
+            text-align: center;
+        }
+
+        input[type=range] {
+            flex: 1;
+            -webkit-appearance: none;
+            background: transparent;
+            z-index: 2;
+            margin: 0;
+        }
+        
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #fff;
+            cursor: pointer;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            margin-top: -12px;
+            border: 3px solid #555;
+        }
+        
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.1);
+            border-radius: 2px;
+        }
+
+        .hint-text {
+            text-align: center;
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: -5px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="app-layout-wrapper">
+        
+        <header class="main-header">
+            <a href="index.html" class="logo-area" title="返回大廳"></a>
+            <div class="header-title">晟自然輔助系統<br>水的三態變化</div>
+            <a href="https://line.me/ti/g2/TTCqPpZP6lQqX1z_AUDPNm4977Dvylew3O7oBg" target="_blank" class="line-btn">
+                加 LINE 討論
+            </a>
+        </header>
+
+        <main class="content-scroll-area">
+            
+            <div class="ui-card topic-description">
+                觀察水分子在不同溫度下的排列與運動狀態。<br>
+                試著改變溫度，看看固態、液態與氣態有什麼不同。
+            </div>
+
+            <div class="simulation-container" id="sim-container">
+                <canvas id="simCanvas"></canvas>
+                <div class="thermometer-display">
+                    <span>🌡️</span>
+                    <span id="tempValue">25</span>°C
+                </div>
+            </div>
+
+        </main>
+
+        <footer class="controls-dock">
+            
+            <div class="state-btn-group">
+                <button class="state-btn" data-state="solid" >
+                    <span>🧊</span>固態
+                </button>
+                <button class="state-btn active" data-state="liquid" >
+                    <span>💧</span>液態
+                </button>
+                <button class="state-btn" data-state="gas" >
+                    <span>☁️</span>氣態
+                </button>
+            </div>
+
+            <div class="lever-wrapper">
+                <span class="lever-label">❄️</span>
+                <input type="range" id="heatLever" min="-273" max="300" value="0" step="1">
+                <span class="lever-label">🔥</span>
+            </div>
+            <div class="hint-text">
+                左右撥動以調整溫度
+            </div>
+
+        </footer>
+    </div>
+
+    <script>
+    // =========================================
+    // 晟自然輔助系統：物理直覺最終版 (工程優化版)
+    // =========================================
+    
+    const canvas = document.getElementById('simCanvas');
+    const ctx = canvas.getContext('2d');
+    
+    // 物理常數
+    const NUM_PARTICLES = 120; 
+    const PARTICLE_RADIUS = 12; 
+    const PADDING = 20; 
+    const CONTAINER_WIDTH = 1000; 
+    const CONTAINER_HEIGHT = 1000; 
+    
+    // 系統變數
+    let temperature = 25; 
+    let heatPower = 0;    
+    let currentPhase = 'liquid'; 
+    let scale = 1; 
+    let particles = [];
+
+    // 粒子類別
+    class Particle {
+        constructor(id) {
+            this.id = id;
+            this.reset();
+            
+            // 固態專用
+            this.latticeX = 0;
+            this.latticeY = 0;
+            this.anchored = false; 
+            
+            // 狀態
+            this.isGas = false;
+            
+            // 視覺
+            this.baseAngle = Math.random() * Math.PI * 2;
+        }
+
+        reset() {
+            this.x = PADDING + Math.random() * (CONTAINER_WIDTH - PADDING*2);
+            this.y = Math.random() * CONTAINER_HEIGHT;
+            this.vx = (Math.random() - 0.5) * 5;
+            this.vy = (Math.random() - 0.5) * 5;
+            this.angle = Math.random() * Math.PI * 2;
+            this.vAngle = (Math.random() - 0.5) * 0.1;
+            this.radius = PARTICLE_RADIUS;
+        }
+
+        // ============================================
+        // 核心物理更新 (工程優化：自適應阻尼)
+        // ============================================
+        update(dt = 1.0) {
+            
+            // ----------------------------------------
+            // A. 固態模式
+            // ----------------------------------------
+            if (temperature <= 0) {
+                this.isGas = false; 
+
+                if (!this.anchored) {
+                    // 自由落體階段：低阻力，讓它快速掉下來
+                    this.vy += 0.4 * dt; 
+                    this.vx *= 0.85; 
+					this.vy *= 0.85;
+                    this.x += this.vx * dt;
+                    this.y += this.vy * dt;
+
+                    if (this.y > CONTAINER_HEIGHT - PADDING - this.radius) {
+                        this.anchored = true;
+                        this.latticeX = this.x;
+                        this.latticeY = this.y;
+                    }
+                } else {
+                    // 晶格鎖定階段：高穩定性
+                    const k = 0.05; 
+                    const friction = 0.8; 
+                    
+                    const forceX = (this.latticeX - this.x) * k;
+                    const forceY = (this.latticeY - this.y) * k;
+                    this.vx += forceX; this.vy += forceY;
+                    this.vx *= friction; this.vy *= friction;
+                    
+                    // 塑性變形
+                    this.latticeX += (this.x - this.latticeX) * 0.02; 
+                    this.latticeY += (this.y - this.latticeY) * 0.02;
+
+                    // 熱震動
+                    let tempRatio = Math.max(0, (temperature + 273) / 273);
+                    this.vx += (Math.random() - 0.5) * 0.5 * tempRatio;
+                    this.vy += (Math.random() - 0.5) * 0.5 * tempRatio;
+
+                    this.x += this.vx; 
+                    this.y += this.vy;
+                }
+
+                // 強制邊界
+                if (this.x < PADDING) { this.x = PADDING; this.vx = 0; }
+                if (this.x > CONTAINER_WIDTH - PADDING) { this.x = CONTAINER_WIDTH - PADDING; this.vx = 0; }
+                if (this.y > CONTAINER_HEIGHT - PADDING) { this.y = CONTAINER_HEIGHT - PADDING; this.vy = 0; }
+                
+                let tempRatio = Math.max(0, (temperature + 273) / 273);
+                this.angle = this.baseAngle + (Math.random() - 0.5) * 0.2 * tempRatio;
+                return;
+            }
+
+            // ----------------------------------------
+            // B. 流體模式 (液體 + 氣體)
+            // ----------------------------------------
+            this.anchored = false; 
+
+            // 1. 相變判定
+            if (!this.isGas) {
+				// 1. 計算溫度比例 (0度=0.0, 50度=0.5, 100度=1.0)
+				let tRatio = Math.max(0, temperature) / 100; 
+
+				// 2. 機率曲線：使用「三次方」讓低溫跟高溫拉開巨大差距
+				// 25度時: 0.25^3 = 0.015 (極小)
+				// 85度時: 0.85^3 = 0.614 (變大 40 倍!)
+				let evapChance = 0.003 * Math.pow(tRatio, 4);
+
+				// 沸騰時機率直接拉滿
+				if (temperature >= 100) evapChance = 0.1;
+
+				if (Math.random() < evapChance * dt) {
+					this.isGas = true;
+
+					// 3. 出速力道：溫度越高，衝出去越快					
+					let kickPower = 4.0 + 8.0 * tRatio; 
+        
+					// 向上衝刺 (負值為向上)
+					this.vy -= (kickPower + Math.random() * 5.0); 
+        
+					// 橫向擴散 (溫度高時擴散也變大)
+					let spread = 2.0 + 6.0 * tRatio;
+					this.vx += (Math.random() - 0.5) * spread;
+				}
+			} else {
+                // 凝結判定
+                let condenseChance = 0;
+                // 只有接觸液面且向下運動才容易凝結
+                if (this.y > CONTAINER_HEIGHT - PARTICLE_RADIUS * 8 && this.vy > 0) {
+                     condenseChance = 0.2; 
+                }
+                if (temperature < 50) condenseChance += 0.001;
+
+                if (Math.random() < condenseChance * dt) {
+                    this.isGas = false;
+                    this.vx *= 0.5; 
+                    this.vy *= 0.5;
+                }
+            }
+
+            // 2. 運動物理 (Adaptive Physics Core)
+            const speedSq = this.vx*this.vx + this.vy*this.vy;
+            
+            if (this.isGas) {
+                // [氣體物理]
+                this.vy -= 0.005 * dt; // 微重力
+                this.vx *= 1;     // 極低阻力 (自由飛行)
+                this.vy *= 1;
+
+            } else {
+                // [液體物理] - 自適應阻尼
+                this.vy += 0.4 * dt; // 正常重力 (不再打折)
+
+                if (speedSq > 2.0) {
+                    // 高速狀態 (自由落體、流動)：低阻力
+                    this.vx *= 0.99; 
+                    this.vy *= 0.99; 
+                } else {
+                    // 低速狀態 (堆疊、平靜水面)：高阻尼 (The Swamp)
+                    // 這能有效抑制抖動，但不會影響掉落中的水
+                    this.vx *= 0.96; 
+                    this.vy *= 0.96; 
+                }
+
+                // 溫度微擾動 (模擬布朗運動，但只對低速粒子顯著)
+                let activity = Math.max(0, temperature) / 300;
+				if (temperature > 80) activity *= 2.0;
+                this.vx += (Math.random() - 0.5) * activity;
+				this.vy += (Math.random() - 0.5) * activity;
+            }
+            
+            // 3. 位置更新
+            // 氣體受溫度加速，液體保持 1.0 真實速度
+            let speedScale = this.isGas ? (1.0 + Math.max(0, temperature-25)/200) : 1.0;
+            					
+            this.x += this.vx * speedScale * dt;
+            this.y += this.vy * speedScale * dt;
+
+            this.handleBoundaries(this.isGas ? 0.95 : 0.4);
+            
+            // 角度更新
+            this.angle += this.vAngle * (this.isGas ? 2 : 1) * dt;
+        }
+
+        handleBoundaries(bounce) {
+            
+			let wallBounce = this.isGas ? 1.0 : 0.4;
+			
+			if (this.x < PADDING) { this.x = PADDING; this.vx *= -1 * wallBounce; }
+			if (this.x > CONTAINER_WIDTH - PADDING) { this.x = CONTAINER_WIDTH - PADDING; this.vx *= -1 * wallBounce; }
+			if (this.y > CONTAINER_HEIGHT - PADDING) { this.y = CONTAINER_HEIGHT - PADDING; this.vy *= -1 * wallBounce; }
+            // 4. [關鍵修改] 撞到天花板 -> 強制凝結
+			if (this.y < PADDING) { 
+				this.y = PADDING; 
+    
+				// 只有在「溫度不夠高」的時候，撞到天花板才會凝結
+				// 如果已經沸騰 (>=100)，天花板就不再具備冷凝能力，氣體應該反彈
+				let isBoiling = temperature >= 100;
+
+				if (this.isGas && !isBoiling) {
+					// [低溫模式]：冷凝效應
+					this.isGas = false; 
+					this.vy *= -1 * 0.5; // 反彈並損失能量
+					this.vy += 2.0;      // 加上重力滴落感
+				} else {
+					// [沸騰模式] 或 [非氣體]：單純反彈
+					// 氣體保持氣態，繼續在容器內亂撞
+					this.vy *= -1 * wallBounce; 
+				}
+			}
+        }
+
+        draw(ctx) {
+            if (isNaN(this.x) || isNaN(this.y)) return;
+
+            ctx.save();
+            ctx.translate(this.x, this.y);
+            ctx.rotate(this.angle);
+
+            ctx.beginPath();
+            ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+            ctx.fillStyle = this.isGas ? "rgba(255, 77, 77, 1.0)" : "#ff4d4d";
+            ctx.fill();
+            ctx.strokeStyle = "#800000";
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+
+            // H2O 分子細節
+            const hDist = this.radius * 1.1;
+            const hRad = this.radius * 0.6;
+            const hAngle = 2.0; 
+
+            ctx.beginPath();
+            ctx.arc(Math.cos(-hAngle/2)*hDist, Math.sin(-hAngle/2)*hDist, hRad, 0, Math.PI*2);
+            ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(Math.cos(hAngle/2)*hDist, Math.sin(hAngle/2)*hDist, hRad, 0, Math.PI*2);
+            ctx.fillStyle = "#ffffff"; ctx.fill(); ctx.stroke();
+
+            ctx.restore();
+        }
+    }
+
+    // =========================================
+    // 系統管理
+    // =========================================
+
+    function init() {
+        particles = [];
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+            particles.push(new Particle(i));
+        }
+        resize();
+        window.addEventListener('resize', resize);
+        requestAnimationFrame(loop);
+        updatePhaseState(true);
+    }
+
+    function resize() {
+        const container = document.getElementById('sim-container');
+        if (!container) return;
+        const rect = container.getBoundingClientRect();
+        const dpr = Math.min(window.devicePixelRatio || 1, 2); 
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        scale = canvas.width / CONTAINER_WIDTH;
+        ctx.setTransform(1, 0, 0, 1, 0, 0); 
+        ctx.scale(scale, scale);
+    }
+
+    function resolveCollisions() {
+        // [參數調整]
+        let spacingFactor = 3.2; 
+        if (temperature <= 0) spacingFactor = 4.0;
+        else if (currentPhase === 'gas') spacingFactor = 3.0;
+
+        const minDist = PARTICLE_RADIUS * spacingFactor;
+        const minDistSq = minDist * minDist;
+
+        for (let i = 0; i < particles.length; i++) {
+            for (let j = i + 1; j < particles.length; j++) {
+                const p1 = particles[i];
+                const p2 = particles[j];
+                
+                const dx = p2.x - p1.x;
+                const dy = p2.y - p1.y;
+                const distSq = dx*dx + dy*dy;
+
+                if (distSq < minDistSq && distSq > 0) {
+                    const dist = Math.sqrt(distSq);
+                    const nx = dx / dist;
+                    const ny = dy / dist;
+            
+                    // 固態推力小，液體推力適中
+                    let pushStrength = 0.5; 
+                    if (temperature <= 0) pushStrength = 0.1;
+
+                    const overlap = (minDist - dist) * pushStrength;
+
+                    p1.x -= nx * overlap; p1.y -= ny * overlap;
+                    p2.x += nx * overlap; p2.y += ny * overlap;
+
+                    if (temperature <= 0) continue;
+
+                    // 動量交換
+                    let restitution = 0.2; 
+                    // 氣體之間彈性好，氣液之間也給一點彈性讓它能彈開
+                    if (p1.isGas || p2.isGas) restitution = 1.0; 
+					else if (p1.isGas || p2.isGas) restitution = 0.8;
+
+                    const v1n = p1.vx * nx + p1.vy * ny;
+                    const v2n = p2.vx * nx + p2.vy * ny;
+            
+                    if (v1n < v2n) continue;
+
+                    const impulse = (v2n - v1n) * (1 + restitution) * 0.5;
+                    p1.vx += impulse * nx; p1.vy += impulse * ny;
+                    p2.vx -= impulse * nx; p2.vy -= impulse * ny;
+                    
+                    // 碰撞後的阻尼 (穩定堆疊)
+                    if (!p1.isGas && !p2.isGas) {
+                        p1.vx *= 0.99; p1.vy *= 0.99;
+                        p2.vx *= 0.99; p2.vy *= 0.99;
+                    }
+                }
+            }
+        }
+    }
+
+    function updatePhaseState(forceReset = false) {
+        let nextPhase = '';
+        if (temperature <= 0) nextPhase = 'solid';
+        else if (temperature < 100) nextPhase = 'liquid';
+        else nextPhase = 'gas';
+
+        if (nextPhase !== currentPhase || forceReset) {
+            currentPhase = nextPhase;
+            const btns = document.querySelectorAll('.state-btn');
+            if(btns) btns.forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.state === currentPhase);
+            });
+            
+            if (currentPhase === 'solid') {
+                particles.forEach(p => p.anchored = false);
+            }
+        }
+    }
+
+    function loop() {
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // 背景繪製
+        if (temperature <= 0) {
+            const alpha = Math.min(0.8, Math.abs(temperature)/50);
+            ctx.fillStyle = `rgba(200, 230, 255, ${0.3 + alpha * 0.2})`;
+        } else if (temperature >= 100) {
+            const alpha = Math.min(1.0, (temperature - 100) / 150);
+            ctx.fillStyle = `rgba(255, 210, 190, ${0.15 + alpha * 0.35})`;
+        } else {
+            ctx.fillStyle = "#f8f9fa";
+        }
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+
+        // 1. 控溫
+        if (heatPower !== 0) {
+            let changeRate = 0.2;
+			if (heatPower < 0) {
+				let dist = temperature - (-273);
+				let damping = Math.min(1.0, dist / 70) + 0.05;
+				changeRate *= damping;
+			}
+			
+            temperature += heatPower * changeRate;
+            if (temperature > 600) temperature = 600;
+            if (temperature < -273) temperature = -273;
+            
+            const tempEl = document.getElementById('tempValue');
+            if(tempEl) tempEl.innerText = Math.round(temperature);
+            updatePhaseState();
+        }
+
+        // 2. 物理更新 (5次微步，穩定堆疊)
+        const SUB_STEPS = 5; 
+        const subDt = 1.0 / SUB_STEPS;
+
+        for (let s = 0; s < SUB_STEPS; s++) {
+            particles.forEach(p => p.update(subDt));
+            const solverIterations = 2; 
+            for(let k = 0; k < solverIterations; k++) {
+                resolveCollisions();
+            }
+        }
+
+        // 3. 繪製
+        particles.forEach(p => p.draw(ctx));
+
+        requestAnimationFrame(loop);
+    }
+
+    // UI 綁定
+    const lever = document.getElementById('heatLever');
+    if (lever) {
+        lever.addEventListener('input', (e) => {
+            heatPower = parseInt(e.target.value) / 100;
+        });
+        function resetLever() { lever.value = 0; heatPower = 0; }
+        lever.addEventListener('change', resetLever);
+        lever.addEventListener('mouseup', resetLever);
+        lever.addEventListener('touchend', resetLever);
+    }
+
+    window.setMode = function(mode) {
+        switch(mode) {
+            case 'solid': temperature = -20; break;
+            case 'liquid': temperature = 25; break;
+            case 'gas': temperature = 150; break;
+        }
+        if(lever) { lever.value = 0; heatPower = 0; }
+        const tempEl = document.getElementById('tempValue');
+        if(tempEl) tempEl.innerText = Math.round(temperature);
+        updatePhaseState(true);
+    }
+
+    init();
+</script>
+</body>
+</html>
