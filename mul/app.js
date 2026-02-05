@@ -793,7 +793,7 @@ const GAME = {
                         if (GAME.currentLife <= 0) GAME.endGame(false);
                     } else {
                         // 原本的競速模式懲罰 (扣時間)
-                        GAME.startTime -= 1000; 
+                        GAME.startTime -= 5000; 
                     }
                     
                     // 🛑 修正點：使用 .wrong 才能觸發紅色震動
