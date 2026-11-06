@@ -1,0 +1,10 @@
+/* 晟自然玩科學 shared responsive shell tokens. Versioned together with the lobby. */
+/* Reuse in simulations only after device-specific verification. */
+:root {
+  --shared-pwa-top-gap: 16px;
+  --shared-footer-min-height: 76px;
+  --shared-safe-top: env(safe-area-inset-top, 0px);
+  --shared-safe-bottom: env(safe-area-inset-bottom, 0px);
+  --shared-touch-min: 44px;
+}
+/* Common approach: favor native flow and safe areas, avoid hardcoded screen.height compensation. */
