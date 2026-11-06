@@ -1,21 +1,34 @@
-# 晟自然玩科學｜iPhone PWA 大廳版面基準（2026-11-07）
- 
-## 用途
-將已由 iPhone 實機逐版確認的上下區域規格保存在 Repository。日後其他模擬可以**參考**這套安全區、操作區原則，但不可直接將大廳的特定高度套用到所有實驗；每個模擬仍須獨立驗收。
- 
-## 目前基準
-- 參考頁面：`ssscsystem/index.html`，大廳 v16。上一個使用者實機畫面為 v15，確認頂部位置及底部高度適合；v16 僅修正 Copyright 水平置中。
-- 手機 PWA 判斷：`@media (max-width:600px) and (display-mode:standalone)`。
-- 大廳外框：`body {padding-top:16px; height:calc(100dvh + 16px); min-height:calc(100dvh + 16px)}`。此數值為從 v11 確認的頂部清晰位置，不要再往上調；注意原有 `header` 仍有 `env(safe-area-inset-top)`。
-- 頁面原有 `header` 在手機仍用 `padding-top:calc(12px + env(safe-area-inset-top))`、`padding-bottom:8px`。深色不透明、不使用毛玻璃或發光文字效果。
-- 底部：手機 `footer` 最小高度 `76px`，內距 `14px 12px calc(18px + env(safe-area-inset-bottom))`，高度經 v14/v15 實機確認合適。
-- Copyright：完整 `© 2026 晟自然玩科學 All Rights Reserved.`，置中於整個 footer 的水平寬度；v16 修正不對稱內距導致的偏左。
-- 版本按鈕：僅測試時暫留，浮動在音樂按鈕正上方；手機 `right:10px; bottom:calc(70px + env(safe-area-inset-bottom))`。
-- 音樂按鈕：手機 `right:10px; bottom:calc(18px + env(safe-area-inset-bottom))`。不要讓它遮住實驗操作。
-- 大廳列表：中間可捲動；不變更原本卡片外觀、分類功能、模擬連結。
- 
-## 注意
-1. 這是**大廳實機基準**，不是已驗收的所有模擬共用 CSS，也不代表 Android 或 Safari 網頁版已驗收。
-2. 如後續修改頂部位置、PWA 高度或 footer 高度，應先說明且獨立驗收；不要用新版本意外覆蓋上述核定值。
-3. 分類選單（目前一行左右滑動）尚在討論，未定稿。
-4. GitHub 寫入成功與 Pages 部署成功是兩個不同狀態。
+# 晟自然玩科學｜共用版面與 PWA 基準
+更新：2026-11-07｜整理版本：大廳 v18（以 v17 已驗收視覺為準）
+
+## 設計與裝置原則（沿用晟自然官網方向）
+- iPhone Safari、主畫面 PWA、Android 與不同尺寸手機，盡可能共用同一組流動版面及 `env(safe-area-inset-*)` 安全區處理。
+- 高度優先考量 `svh`、內容自然延伸、可用捲動區；只有實驗互動必須固定工作區時，才獨立處理容器捲動。
+- 除確有實機驗證的裝置差異，避免為 PWA / Safari 分別堆疊大量 CSS。不要以 `screen.height` 手動推算。
+- 不更動實驗工作區的教學功能、元件及原有科目識別色。共用的只有殼層、導覽、安全區、基礎觸控尺度。
+- 官網本身已有歷史 CSS 覆寫，採用其「統一規則」原則，而非原樣搬運整份 CSS。
+
+## 當前可回退的視覺基準
+- 大廳：`index.html` v17；視覺已依 iPhone PWA 截圖確認。v18 為**架構整理版**，不以重新設計外觀為目的。
+- 頂部：以 v11 實測的清晰位置為基準；PWA 直式手機 `padding-top:16px`（加於 body，仍需配合 header 的安全區）。
+- 底部：維持 v14/v15 核定的高度，`footer` `min-height:76px`，完整置中 `© 2026 晟自然玩科學 All Rights Reserved.`。
+- 分類：A 方案，單列橫向滑動，第一個按鈕有左側留白。
+- 版本按鈕：開發期間暫留，浮動在音樂按鈕上方，正式清理後可移除。
+- **注意：** `calc(100dvh + 16px)` 是為已測的 iPhone PWA 保留的相容層，**尚未證明適合所有手機**；不得直接把這個計算複製到其他模擬。
+- 網頁版、PWA、不同手機尺寸的跨裝置一致性需要後續實機比較，不能因程式已寫入就標為驗收通過。
+
+## v18 檔案責任
+- `index.html`：大廳語意 HTML、實驗入口與版本標記，連結帶 `?v=18` 的 CSS/JS 資源。
+- `assets/layout-shared.css`：共用 PWA 頂部位置與 Footer 高度等基礎變數。未經實機驗收，不能直接替其他模擬引用。
+- `assets/lobby.css`：從 v17 原樣抽離的大廳 CSS（保留既有規則順序）；圖片相對路徑改為 `../page.jpg`，失效 `body::before` 遮罩移除。待跨裝置驗收後再逐區合併多層重複 media rules。
+- `assets/lobby.js`：現有卡片過場、分類、背景音樂、版本檢查及手動重新載入；未改變原始互動流程。
+- `manifest.webmanifest`：原有同源 `/ssscsystem/` scope，standalone 保留。
+
+## 後續整理關卡
+1. **先驗收 v18**：PWA、Safari 的背景、Logo、分類、卡片、Copyright、按鈕、音樂、版本檢查是否與 v17 相同。若外部檔案部署異常，先回退 v17，不要繼續修改。
+2. 驗收後再做「同一條件下的重複 CSS」合併，避免清掉有意義的瀏覽器/PWA差異。先不要在 v18 尚未驗收時大量刪除舊規則。
+3. 建立可實際被不同模擬引用的共用 Shell CSS/JS，在月相單一模擬測試返回大廳與安全區，完成實機驗收後逐批導入。
+4. 目前其餘 15 個大廳入口大多仍使用 `target="_blank"`；涉及 PWA 導覽的修改另立工作，不與視覺重構混在一起。
+5. 共用 CSS 若跨 Repository 使用，需要驗證 GitHub Pages 正式 URL、快取與版本號，不可只憑 Repository 名稱假設共用成功。
+
+每次必須區分：已寫入 GitHub、GitHub Pages 已部署、iPhone 實機已驗收。
