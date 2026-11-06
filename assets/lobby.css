@@ -67,7 +67,7 @@ header .system-subtitle{color:#e4e5ec;text-shadow:none!important;filter:none!imp
   footer>.copyright-text{
     position:absolute;
     left:50%;
-    top:50%;
+    top:calc(50% - var(--shared-copyright-lift, 6px));
     transform:translate(-50%,-50%);
     width:max-content;
     max-width:calc(100% - 24px);
