@@ -10,7 +10,7 @@
   "theme_color": "#1a1a2e",
   "icons": [
     {
-      "src": "logo_circle.png",
+      "src": "head.png",
       "sizes": "any",
       "type": "image/png",
       "purpose": "any"
