@@ -1,0 +1,19 @@
+{
+  "id": "/ssscsystem/",
+  "name": "晟自然玩科學",
+  "short_name": "玩科學",
+  "description": "晟自然互動科學模擬",
+  "start_url": "/ssscsystem/",
+  "scope": "/ssscsystem/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#1a1a2e",
+  "icons": [
+    {
+      "src": "logo_circle.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
