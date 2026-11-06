@@ -3,6 +3,7 @@
 :root {
   --shared-pwa-top-gap: 16px;
   --shared-footer-min-height: 76px;
+  --shared-copyright-lift: 6px;
   --shared-safe-top: env(safe-area-inset-top, 0px);
   --shared-safe-bottom: env(safe-area-inset-bottom, 0px);
   --shared-touch-min: 44px;
