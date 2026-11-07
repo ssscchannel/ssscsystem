@@ -1,0 +1,11 @@
+/* Temporary, shared module version checker. Remove links and data attributes after rollout. */
+.module-version-trigger{flex:0 0 auto;min-width:35px;min-height:30px;padding:4px 6px;border:1px solid rgba(255,255,255,.7);border-radius:8px;background:rgba(0,0,0,.26);color:#fff;font:700 11px/1 system-ui,sans-serif;cursor:pointer;touch-action:manipulation}
+.module-version-trigger:focus-visible{outline:2px solid #00d2ff;outline-offset:3px}
+.module-version-panel[hidden]{display:none!important}
+.module-version-panel{position:fixed;z-index:1300;top:calc(env(safe-area-inset-top,0px) + 78px);right:12px;width:min(295px,calc(100vw - 24px));padding:13px;border-radius:12px;border:1px solid #a49ac7;background:#fff;color:#343042;box-shadow:0 8px 28px rgba(0,0,0,.35);font:13px/1.5 system-ui,'Microsoft JhengHei',sans-serif}
+.module-version-panel strong{display:block;margin-bottom:5px;font-size:14px}
+.module-version-panel .module-version-status{margin:7px 0;color:#53516b}
+.module-version-actions{display:flex;flex-wrap:wrap;gap:6px}
+.module-version-actions button{flex:1;min-width:75px;min-height:36px;padding:7px 8px;border:1px solid #a9a3bc;border-radius:8px;background:#f2eff8;color:#352f4e;font:600 12px system-ui,sans-serif;cursor:pointer}
+.module-version-actions button:disabled{opacity:.55;cursor:wait}
+@media(max-width:430px){.module-version-trigger{min-width:32px;padding-inline:5px;font-size:10px}.module-version-panel{right:8px;width:min(280px,calc(100vw - 16px))}}
